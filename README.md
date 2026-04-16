@@ -1,6 +1,6 @@
 # fraclaw
 
-Fraclaw is a modular, 100% local AI assistant developed to run on personal hardware. It uses local model (via LM Studio) and is controlled through a **Telegram** interface. 
+fraclaw is a modular, 100% local AI assistant developed to run on personal hardware. It uses local model (via LM Studio) and is controlled through a **Telegram** interface. 
 
 The project focuses on privacy and local execution for document management, web monitoring, and automated media generation.
 
