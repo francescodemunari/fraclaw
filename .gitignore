@@ -1,4 +1,4 @@
-# Variabili d'ambiente (NON committare mai questo file!)
+# Environment variables (Sensitive data - NEVER commit this file!)
 .env
 
 # Python
@@ -20,22 +20,22 @@ venv/
 env/
 .env_bak
 
-# Dati locali (database, file generati, temp)
+# Local data (Databases, generated files, knowledge base)
 data/
 
-# IDE
+# IDE Settings
 .vscode/
 .idea/
 *.sublime-project
 *.sublime-workspace
 
-# Log
+# Logs
 *.log
 
-# OS
+# OS generated files
 .DS_Store
 Thumbs.db
 desktop.ini
 
-# Modelli Whisper scaricati
+# Downloaded AI Models (e.g. Whisper)
 models/
