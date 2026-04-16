@@ -1,21 +1,3 @@
-"""
-main.py — Entry point di Fraclaw
-
-Sequenza di avvio:
-  1. Configura il logging (loguru → file rotante + console colorata)
-  2. Inizializza il database SQLite
-  3. Crea l'applicazione Telegram
-  4. Avvia il polling (il bot rimane in ascolto indefinitamente)
-
-Avvio:
-    python main.py
-
-Requisiti prima dell'avvio:
-  - LM Studio avviato con server API attivo (porta 1234)
-  - Il modello qwen3.5-9b caricato in LM Studio
-  - ComfyUI avviato (porta 8188) con almeno un checkpoint caricato
-"""
-
 import sys
 from pathlib import Path
 
