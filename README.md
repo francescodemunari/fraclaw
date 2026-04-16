@@ -21,7 +21,7 @@ The project focuses on privacy and local execution for document management, web 
 - **Linguistic Core**: Qwen 3.5 9B (via [LM Studio](https://lmstudio.ai/))
 - **Interface**: [python-telegram-bot](https://python-telegram-bot.org/)
 - **Databases**: SQLite (Structured facts) & ChromaDB (Unstructured knowledge)
-- **Audio/Vision**: Edge-TTS, Whisper, ComfyUI (SDXL API)
+- **Audio/Vision**: Edge-TTS, Whisper, ComfyUI 
 
 ---
 
