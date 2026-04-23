@@ -1,13 +1,9 @@
 ![Fraclaw Banner](webapp/public/banner.png)
 
-<p align="center">
-  <img src="webapp/public/logo.png" width="120" alt="Fraclaw Logo">
-</p>
-
 <h1 align="center">FRACLAW — Your Recursive Local AI Agent</h1>
 
 <p align="center">
-  <strong>The privacy-first, multi-tool assistant that runs entirely on your hardware.</strong>
+  <strong>A multi-tool assistant that runs entirely on your hardware.</strong>
 </p>
 
 ---
