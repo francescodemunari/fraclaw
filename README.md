@@ -1,4 +1,4 @@
-![Fraclaw Banner](webapp/public/banner.jpg)
+![Fraclaw Banner](webapp/public/banner.png)
 
 <p align="center">
   <img src="webapp/public/logo.png" width="120" alt="Fraclaw Logo">
@@ -36,26 +36,19 @@ Fraclaw is aware of its surroundings. It can read, write, and manage your local 
 
 ---
 
-##  Tested & Recommended Models
-For optimal stability and reasoning, Fraclaw has been extensively tested with the following models (via LM Studio):
+##  Tested Configuration
+Fraclaw has been successfully tested on a mid-range local environment with the following specs:
 
-| Role | Recommended Model | Quantization | Why? |
-| :--- | :--- | :--- | :--- |
-| **Coder** | `Qwen2.5-Coder-14B-Instruct` | Q4_K_M / Q6_K | State-of-the-art coding logic for 14B models. |
-| **Base** | `Qwen2.5-14B-Instruct` | Q4_K_M | Excellent general reasoning and consistent tone. |
-| **Alternative Base** | `Llama-3.1-8B-Instruct` | Q8_0 | Fast, reliable, and lower VRAM usage. |
-| **Vision** | `Qwen2-VL-7B-Instruct` | BF16 / Q4_K_M | High accuracy in document and image analysis. |
-| **Image Gen** | `Juggernaut XL (SDXL)` | -- | Best-in-class local image generation via ComfyUI. |
+###  Hardware Specs
+- **VRAM**: 12 GB (Tested on RTX 3060/4070 series)
+- **RAM**: 16 GB
+- **Storage**: SSD recommended for model loading speed.
 
----
-
-##  Hardware Requirements
-
-| Component | Minimum | Recommended |
-| :--- | :--- | :--- |
-| **RAM** | 16 GB | 32 GB+ |
-| **GPU (VRAM)** | 8 GB | 12 GB+ (RTX 3060/4070+) |
-| **Storage** | 20 GB (SSD) | 50 GB+ (for multiple models) |
+###  Verified Models
+The following models have been confirmed as fully operational within the Fraclaw orchestrator:
+- **Base Agent**: `Qwen 3.5 9B` (Fast and accurate for daily tasks).
+- **Coder Agent**: `Qwen 3 Coder 30B` (High-tier reasoning for complex technical scripts).
+- **Vision Agent**: `Qwen2-VL-7B-Instruct`.
 
 ---
 
@@ -83,18 +76,3 @@ npm run dev
 ```
 
 ---
-
-##  Pushing Updates to GitHub
-1. **Stage changes**: `git add .`
-2. **Commit**: `git commit -m "description of what you changed"`
-3. **Push**: `git push origin main`
-
-###  Creating Your First Release (v1.0.0)
-```bash
-git tag -a v1.0.0 -m "Official Release 1.0: Hybrid Audio & Orchestration stable"
-git push origin v1.0.0
-```
-
----
-
-*Fraclaw — More than a chatbot, your local silicon companion.*
