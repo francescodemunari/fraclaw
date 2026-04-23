@@ -1,0 +1,139 @@
+@import "tailwindcss";
+
+:root {
+  /* Premium Crystal Palette — Aurora Inspired */
+  --color-primary: #8190b2;      /* Silver Crystal Glow */
+  --color-on-primary: #000000;
+  --color-secondary: #4a2c5a;    /* Amethyst Depth */
+  --color-background: #05070a;   /* Ultra Dark Blue */
+  --color-surface: #0a0c10;
+  --color-surface-variant: #1a1e26;
+  --color-on-surface: #e1e2e8;
+  --color-on-surface-variant: #c4c6cf;
+  --color-outline: #8e9099;
+  --color-outline-variant: #44474e;
+  --color-surface-container: #12141a;
+  
+  --font-headline: 'Outfit', sans-serif;
+  --font-body: 'Inter', sans-serif;
+
+  --font-family-headline: var(--font-headline);
+  --font-family-body: var(--font-body);
+}
+
+@layer base {
+  :root {
+    --glass-border: rgba(255, 255, 255, 0.05);
+    background-color: var(--color-background);
+    color: var(--color-on-surface);
+    color-scheme: dark;
+    /* Clean font weight and tracking for premium feel */
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    letter-spacing: -0.01em;
+  }
+  
+  body {
+    min-height: 100dvh;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+/* Premium Animations & Effects */
+.bg-mesh-gradient {
+  background: radial-gradient(at 0% 0%, hsla(220, 30%, 12%, 1) 0, transparent 50%),
+              radial-gradient(at 100% 0%, hsla(280, 40%, 15%, 1) 0, transparent 50%),
+              radial-gradient(at 100% 100%, hsla(220, 20%, 8%, 1) 0, transparent 50%),
+              radial-gradient(at 0% 100%, hsla(260, 30%, 10%, 1) 0, transparent 50%);
+  background-size: 200% 200%;
+  animation: mesh-flow 15s ease-in-out infinite alternate;
+}
+
+@keyframes mesh-flow {
+  0% { background-position: 0% 0%; }
+  100% { background-position: 100% 100%; }
+}
+
+.aurora-header {
+  background: radial-gradient(circle at 50% -20%, rgba(129, 144, 178, 0.15) 0%, rgba(74, 44, 90, 0.1) 40%, transparent 80%);
+  backdrop-filter: blur(40px) saturate(180%);
+  z-index: 100;
+}
+
+.brand-text {
+  font-family: 'Outfit', sans-serif;
+  letter-spacing: 0.6em !important;
+  background: linear-gradient(135deg, #ffffff 0%, #8190b2 50%, #4a2c5a 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 0 20px rgba(129, 144, 178, 0.3));
+}
+
+/* Glassmorphism utilities */
+@layer utilities {
+  .glass-panel {
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(40px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
+  }
+  
+  .glass-button {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .glass-button:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.15);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  }
+
+  /* Global Scrollbar — Minimalist Crystal Design */
+  *::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  *::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 100px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+    transition: background 0.3s ease;
+  }
+  *::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(255, 255, 255, 0.25);
+  }
+  
+  /* Firefox Support */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+  }
+}
+
+/* Initial Animations */
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 1s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+@keyframes scale-in {
+  from { transform: scale(0.9); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.animate-scale-in {
+  animation: scale-in 0.5s ease-out forwards;
+}

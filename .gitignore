@@ -1,0 +1,39 @@
+# 🦅 FRACLAW - GitHub IGNORE LIST
+
+# --- Python ---
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*$py.class
+.ipynb_checkpoints/
+
+# --- Environment & Sensitive Data ---
+.env
+.env.local
+.env.*.local
+*.db
+*.db-journal
+*.sqlite
+
+# --- Node.js & React Frontend ---
+webapp/node_modules/
+webapp/dist/
+webapp/.svelte-kit/
+webapp/.next/
+.eslintcache
+
+# --- Data & Workspace (Keep structure, ignore content) ---
+# We ignore the actual files to protect your privacy and reduce repo size
+data/output/*
+data/uploads/*
+data/workspace/*
+data/voices/*.wav
+!data/voices/default_ref.wav
+
+# --- IDE & System ---
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.log

@@ -1,0 +1,8 @@
+# Fraclaw Premium Audio Extension
+# Install these ONLY if you want local voice cloning (Chatterbox)
+# Warning: Torch + CUDA + Chatterbox can take up ~6GB of space.
+
+torch
+torchaudio
+chatterbox-tts
+soundfile
