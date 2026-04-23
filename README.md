@@ -1,96 +1,100 @@
-![Fraclaw Banner](banner.jpg)
+![Fraclaw Banner](webapp/public/banner.jpg)
 
-# FRACLAW — Your Recursive Local AI Agent
+<p align="center">
+  <img src="webapp/public/logo.png" width="120" alt="Fraclaw Logo">
+</p>
 
-Fraclaw is a **100% private and local** AI assistant. It integrates a Multi-Agent orchestrator, filesystem operations, real-time web monitoring, and a high-performance **Hybrid Voice Engine**. Designed for maximum privacy, Fraclaw operates entirely on your hardware, accessible via **Telegram** or **Web App**.
+<h1 align="center">FRACLAW — Your Recursive Local AI Agent</h1>
 
----
-
-## Modular Architecture
-
-Fraclaw is designed to be lightweight by default, with optional "Premium" extensions for heavy AI tasks.
-
-```
-Devices (Phone/PC) ◄───▶ Tailscale VPN ◀───▶ Vite Dev Server (:5173)
-                                               │
-                                               ▼
-                                         Python Backend (:8000)
-                                               │
-          ┌────────────────────────────────────┴────────────────────────────────────┐
-          │                                    │                                    │
-    LLM Core                            Audio Engine                          Persistence
-   (LM Studio)                          (Hybrid Mode)                       (SQLite + RAG)
-  Qwen 3.5 / Llama 3                 Lite: Edge-TTS (Fast)                 Memory Database
-  Context: 20,000 tokens             Premium: Chatterbox (Cloning)         Vector Knowledge
-```
+<p align="center">
+  <strong>The privacy-first, multi-tool assistant that runs entirely on your hardware.</strong>
+</p>
 
 ---
 
-## Installation
+##  Core Capabilities
 
-### 1. Prerequisites
-- **Python 3.12** (Mandatory for stable CUDA/Torch support)
-- **Node.js** (LTS)
-- **FFmpeg** (Installed and in system PATH)
-- **LM Studio** (Started on port `1234`)
+### Intelligent Orchestration (BASE & CODER)
+Fraclaw uses a transparent **Intent Routing** logic to manage your VRAM efficiently:
+- **BASE Engine**: Used for smart chat, summaries, and decision-making.
+- **CODER Engine**: Automatically swapped in for deep technical tasks. Integrated with a **20,000 token context window** to maintain precision over large scripts.
 
-### 2. Choose Your Deployment
+###  Pro-Grade Filesystem Bridge
+Fraclaw is aware of its surroundings. It can read, write, and manage your local environment:
+- **Safe Operations**: All deletions are redirected to the **System Trash Bin** using `send2trash`.
+- **Project Awareness**: Can analyze file structures recursively to help with migrations or refactoring.
 
-#### 🔹 Core Installation (Lite & Fast)
-Perfect for standard use. Highly responsive, minimal disk space.
-```powershell
+###  Real-time Web & Knowledge Base
+- **Smart Scraper**: Extracts clean markdown from any URL using Jina/Readability fallbacks.
+- **Persistent RAG**: Uses **ChromaDB** to store personal knowledge and indexed documents.
+- **Neural Memory**: Remembers user preferences and "facts" using a local SQLite database.
+
+###  Advanced Multimodal Tools
+- **Vision**: Analyzes photos, diagrams, and logs sent via Telegram or the Web App.
+- **Local Generation**: High-quality SDXL image synthesis via ComfyUI.
+- **Hybrid Voice**: Seamlessly switches between **Edge-TTS (Lite)** and **Chatterbox (Premium)**.
+
+---
+
+##  Tested & Recommended Models
+For optimal stability and reasoning, Fraclaw has been extensively tested with the following models (via LM Studio):
+
+| Role | Recommended Model | Quantization | Why? |
+| :--- | :--- | :--- | :--- |
+| **Coder** | `Qwen2.5-Coder-14B-Instruct` | Q4_K_M / Q6_K | State-of-the-art coding logic for 14B models. |
+| **Base** | `Qwen2.5-14B-Instruct` | Q4_K_M | Excellent general reasoning and consistent tone. |
+| **Alternative Base** | `Llama-3.1-8B-Instruct` | Q8_0 | Fast, reliable, and lower VRAM usage. |
+| **Vision** | `Qwen2-VL-7B-Instruct` | BF16 / Q4_K_M | High accuracy in document and image analysis. |
+| **Image Gen** | `Juggernaut XL (SDXL)` | -- | Best-in-class local image generation via ComfyUI. |
+
+---
+
+##  Hardware Requirements
+
+| Component | Minimum | Recommended |
+| :--- | :--- | :--- |
+| **RAM** | 16 GB | 32 GB+ |
+| **GPU (VRAM)** | 8 GB | 12 GB+ (RTX 3060/4070+) |
+| **Storage** | 20 GB (SSD) | 50 GB+ (for multiple models) |
+
+---
+
+##  Setup & Deployment
+
+### 1. Installation
+```bash
+git clone https://github.com/your-username/fraclaw.git
+cd fraclaw
 pip install -r requirements.txt
 ```
 
-#### Premium Installation (Heavy & High-Quality)
-Includes **Chatterbox TTS** for zero-shot local voice cloning. 
-*Note: Requires ~6GB of additional disk space and a CUDA-capable GPU.*
-```powershell
-pip install -r requirements-premium.txt
+### 2. Environment Configuration
+Copy `.env.example` to `.env` and configure your API keys and model identifiers.
 
-# Ensure PyTorch is optimized for your GPU (CUDA 12.4)
-pip install torch torchaudio --index-url https://download.pytorch.org/whl/cu124 --force-reinstall
+### 3. Execution
+```bash
+# Start the Backend
+python main.py
+
+# Start the Web App (In another terminal)
+cd webapp
+npm install
+npm run dev
 ```
 
 ---
 
-## Voice & Cloning Guide
+##  Pushing Updates to GitHub
+1. **Stage changes**: `git add .`
+2. **Commit**: `git commit -m "description of what you changed"`
+3. **Push**: `git push origin main`
 
-### Hybrid Voice Engine
-Fraclaw can switch engine on-the-fly. Just ask:
-- *"Switch to Lite voice"* ➜ Uses **Edge-TTS** (Instant, cloud-echo, high reliability).
-- *"Switch to Premium voice"* ➜ Uses **Chatterbox** (Local, realistic, supports cloning).
-
-### How to Clone a Voice
-1. Obtain a **5-10 second** audio sample (`.wav`) of the target voice.
-2. Place it in `data/voices/` and name it `PersonaName_ref.wav` (e.g., `Jarvis_ref.wav`).
-3. Fraclaw will automatically detect the reference and clone that voice in Premium mode.
-
----
-
-## Remote Access via Tailscale
-
-Fraclaw is built for remote use without security risks.
-1. Install **Tailscale** on your PC and Phone.
-2. Login to the same account on both.
-3. Access your Web App from anywhere using: `http://<your-pc-tailscale-ip>:5173`
+###  Creating Your First Release (v1.0.0)
+```bash
+git tag -a v1.0.0 -m "Official Release 1.0: Hybrid Audio & Orchestration stable"
+git push origin v1.0.0
+```
 
 ---
 
-## Key Features
-
-- ** Smart Filesystem**: Drag & drop PDF, DOCX, or Images for instant RAG analysis or Vision tasks.
-- ** Active Watchman**: Automatically monitors web changes/news and pushes alerts to you.
-- ** Recursive Memory**: Remembers your preferences and projects in a local SQL database.
-- ** Context Protection**: Managed 20,000-token context window with automatic VRAM clearing.
-
----
-
-## Running Fraclaw
-
-Use the provided automation scripts:
-- `start_webapp.bat`: Launches Backend + Frontend in separate windows.
-- `stop_webapp.bat`: Gracefully kills all project processes.
-- `main.py`: Starts the Telegram Bot only.
-
----
+*Fraclaw — More than a chatbot, your local silicon companion.*
