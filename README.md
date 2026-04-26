@@ -87,7 +87,7 @@ This terminal runs the AI logic, LM Studio bridging, ComfyUI integrations, and t
 python main.py
 ```
 
-#### React Web Application
+#### Web Application
 To access the dashboard on your browser, navigate to the `webapp` folder. You do not need to deal with node commands directly. Simply double click the batch launcher:
 - Run `start.bat` located inside the `webapp` directory. This script will automatically boot up the Vite development server and provide you with the localhost address to view the dashboard.
 
