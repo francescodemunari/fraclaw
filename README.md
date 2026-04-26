@@ -87,10 +87,20 @@ This terminal runs the AI logic, LM Studio bridging, ComfyUI integrations, and t
 python main.py
 ```
 
-#### Web Application
+#### React Web Application
 To access the dashboard on your browser, navigate to the `webapp` folder. You do not need to deal with node commands directly. Simply double click the batch launcher:
 - Run `start.bat` located inside the `webapp` directory. This script will automatically boot up the Vite development server and provide you with the localhost address to view the dashboard.
 
 #### Mobile Application
-To launch the native mobile application on your Windows machine, navigate to the `mobile_app` folder. Just like the web app, there is no need to manually invoke Flutter commands or deal with Dart runtimes:
-- Run the `test_windows.bat` (or equivalent start script) located inside the `mobile_app` directory. This will compile the app and launch the executable window containing the mobile layout and all the native functionalities.
+To launch the native mobile application on your Windows machine, navigate to the `mobile_app` folder. 
+
+**Important:** The **Backend Core** must be actively running for the mobile application to communicate with the AI.
+
+- **For Testing (Windows):** Run the `test_windows.bat` script located inside the `mobile_app` directory. This will compile the app and launch a standalone Windows window to preview the interface and test all functionalities immediately.
+- **For Android (APK):** If you wish to install Fraclaw on your physical Android device:
+  1. Open a terminal in the `mobile_app` folder.
+  2. Run the command: `flutter build apk --split-per-abi`.
+  3. The generated file will be located in `build/app/outputs/flutter-apk/app-release.apk`.
+- **Pre-compiled Versions:** You can find the latest stable `.apk` ready for installation in the **Releases** section of this GitHub repository.
+
+---
