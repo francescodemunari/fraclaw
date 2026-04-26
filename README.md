@@ -61,7 +61,7 @@ Fraclaw has been successfully tested on a mid-range local environment:
 ### 1. Project Initialization
 First, clone the repository and install all required Python dependencies for the core backend.
 ```bash
-git clone https://github.com/your-username/fraclaw.git
+git clone https://github.com/francescodemunari/fraclaw
 cd fraclaw
 pip install -r requirements.txt
 ```
