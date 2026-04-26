@@ -87,19 +87,10 @@ This terminal runs the AI logic, LM Studio bridging, ComfyUI integrations, and t
 python main.py
 ```
 
-#### React Web Application
-To access the premium Glassmorphism dashboard on your browser, navigate to the `webapp` folder. You do not need to deal with node commands directly. Simply double click the batch launcher:
+#### Web Application
+To access the dashboard on your browser, navigate to the `webapp` folder. You do not need to deal with node commands directly. Simply double click the batch launcher:
 - Run `start.bat` located inside the `webapp` directory. This script will automatically boot up the Vite development server and provide you with the localhost address to view the dashboard.
 
-#### Flutter Mobile Application
+#### Mobile Application
 To launch the native mobile application on your Windows machine, navigate to the `mobile_app` folder. Just like the web app, there is no need to manually invoke Flutter commands or deal with Dart runtimes:
 - Run the `test_windows.bat` (or equivalent start script) located inside the `mobile_app` directory. This will compile the app and launch the executable window containing the mobile layout and all the native functionalities.
-
----
-
-## Recent Audits and Highlights (April 2026)
-
-- ComfyUI Auto-Start and VRAM Safety: Implemented automatic backend hook to launch and safely memory-manage ComfyUI during image requests without manual user intervention.
-- Mobile Restyling: Massive native Flutter implementation pushing premium GUI aesthetics, with interactive fullscreen viewing and device downloading mechanics.
-- Global Standardization: Backend transitioned to English for universal maintainability.
-- Performance Tuning: Unified client factory system for optimized API pooling.
