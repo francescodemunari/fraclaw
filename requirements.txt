@@ -9,6 +9,7 @@ python-socketio
 loguru
 python-dotenv
 aiohttp
+httpx
 
 # Memory & AI Logic
 openai
@@ -18,8 +19,9 @@ tiktoken
 
 # Tools - Search & Scraping
 duckduckgo-search
-jina-reader
 beautifulsoup4
+readability-lxml
+lxml
 
 # Tools - Documents
 python-docx
@@ -29,4 +31,5 @@ python-pptx
 
 # Voice, Audio & Listen (Lite Mode)
 edge-tts
+send2trash
 # faster-whisper (Optional, moved to potential future extension)

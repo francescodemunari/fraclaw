@@ -115,31 +115,39 @@ def sync_memory_to_disk() -> None:
 
 # ─── Conversation History ─────────────────────────────────────────────────────
 
-def save_conversation_message(role: str, content: str, session_id: int = None) -> int:
+def save_conversation_message(role: str, content: str, session_id: int = None) -> tuple[int, int]:
     """
     Saves a message in the persistent history tied to a session.
-    Returns the message ID (integer).
+    If session_id is None, a NEW session is created automatically.
+    Returns (message_id, session_id).
     """
     conn = get_connection()
     try:
-        if session_id is None:
-            cursor = conn.cursor()
-            cursor.execute("SELECT id FROM sessions ORDER BY created_at DESC LIMIT 1")
-            row = cursor.fetchone()
-            session_id = row["id"] if row else 1
-
-        truncated = content[:4000] if len(content) > 4000 else content
         cursor = conn.cursor()
+        
+        # 1. Ensure we have a valid session_id
+        if session_id is None:
+            # Create a title from the beginning of the message
+            title = content[:30].strip() + "..." if len(content) > 30 else content
+            if not title:
+                title = "New Conversation"
+                
+            cursor.execute("INSERT INTO sessions (title) VALUES (?)", (title,))
+            session_id = cursor.lastrowid
+            logger.info(f"🆕 Created auto-session #{session_id}: {title}")
+
+        # 2. Save the message
+        truncated = content[:4000] if len(content) > 4000 else content
         cursor.execute(
             "INSERT INTO conversations (role, content, session_id) VALUES (?, ?, ?)",
             (role, truncated, session_id),
         )
         msg_id = cursor.lastrowid
         conn.commit()
-        return msg_id
+        return msg_id, session_id
     except Exception as e:
         logger.warning(f"Error saving message: {e}")
-        return 0
+        return 0, session_id or 0
     finally:
         conn.close()
 
@@ -198,8 +206,8 @@ def init_default_personas() -> None:
     conn = get_connection()
     try:
         cursor = conn.cursor()
-        # Ensure premium voice is set for existing
-        cursor.execute("UPDATE personas SET premium_voice = 1")
+        # Ensure premium voice is OFF by default for existing (they must opt-in)
+        cursor.execute("UPDATE personas SET premium_voice = 0")
         
         # Ensure Jarvis is present and in English
         jarvis_prompt = (
@@ -210,13 +218,25 @@ def init_default_personas() -> None:
         row = cursor.fetchone()
         if row:
             cursor.execute(
-                "UPDATE personas SET system_prompt = ?, description = ?, voice_id = ?, premium_voice = 1 WHERE name = 'Jarvis'",
-                (jarvis_prompt, "Formal and proactive assistant", "en-GB-ThomasNeural") 
+                "UPDATE personas SET system_prompt = ?, description = ?, voice_id = ?, premium_voice = 0 WHERE name = 'Jarvis'",
+                (jarvis_prompt, "Formal and proactive male assistant", "en-US-AndrewNeural") 
             )
         else:
             cursor.execute(
                 "INSERT INTO personas (name, description, system_prompt, voice_id, premium_voice, is_active) VALUES (?, ?, ?, ?, ?, ?)",
-                ("Jarvis", "Formal and proactive assistant", jarvis_prompt, "en-GB-ThomasNeural", 1, 1)
+                ("Jarvis", "Formal and proactive male assistant", jarvis_prompt, "en-US-AndrewNeural", 0, 1)
+            )
+
+        # Ensure Friday (female) is present
+        friday_prompt = (
+            "You are **FRIDAY**, a bright, highly capable, and extremely polite personal AI assistant. "
+            "You must respond ALWAYS in English. Maintain a warm and professional tone."
+        )
+        cursor.execute("SELECT id FROM personas WHERE name = 'Friday'")
+        if not cursor.fetchone():
+            cursor.execute(
+                "INSERT INTO personas (name, description, system_prompt, voice_id, premium_voice, is_active) VALUES (?, ?, ?, ?, ?, ?)",
+                ("Friday", "Bright and polite female assistant", friday_prompt, "en-US-JennyNeural", 0, 0)
             )
         
         conn.commit()

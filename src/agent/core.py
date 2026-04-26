@@ -1,10 +1,12 @@
 """
+core.py — Intelligent multi-agent loop with tool use support.
 
-Supporta:
-  - Tool sincroni (filesystem, web, documenti)
-  - Tool asincroni (generate_image via ComfyUI)
-  - Messaggi multimodali con immagini (vision)
-  - Loop multipli (il modello può chiamare più tool in sequenza)
+Supports:
+  - Synchronous tools (filesystem, web, documents)
+  - Asynchronous tools (generate_image via ComfyUI)
+  - Multimodal messages with images (vision)
+  - Multiple loops (model can call multiple tools in sequence)
+  - Hallucination protection (Sentinel)
 """
 
 import inspect
@@ -16,28 +18,19 @@ import asyncio
 from pathlib import Path
 from types import SimpleNamespace
 from loguru import logger
-from openai import AsyncOpenAI
+
+from src.agent.utils import get_client
 from src.agent.prompts import build_system_prompt
 from src.config import config
 from src.memory.database import get_connection
 from src.memory.preferences import save_conversation_message, get_recent_history
 from src.tools.registry import TOOLS_SCHEMA, get_tool_map
 
-# Numero massimo di iterazioni del loop (evita loop infiniti)
-_MAX_ITERATIONS = 12
+# Maximum number of loop iterations (avoids infinite loops)
+_MAX_ITERATIONS = 20
 
-# Liste di estensioni che identifica file immagine per il tracking
+# List of extensions identifying image files for tracking
 _IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp"}
-
-
-def _make_client() -> AsyncOpenAI:
-    """Creates the OpenAI client pointed at LM Studio."""
-    return AsyncOpenAI(
-        base_url=config.lm_studio_base_url,
-        api_key="lm-studio",
-        timeout=300.0,         # Increased timeout to 5 min for heavy/slow models
-        max_retries=0,
-    )
 
 
 def _is_image_file(path: str) -> bool:
@@ -53,20 +46,30 @@ async def _execute_tool(tool_name: str, tool_args: dict, tool_map: dict) -> str:
         return json.dumps({"error": f"Tool '{tool_name}' not found in registry."})
 
     func = tool_map[tool_name]
+    
+    # Argument validation resilience: filter args that don't match function signature
     try:
+        sig = inspect.signature(func)
+        filtered_args = {
+            k: v for k, v in tool_args.items() 
+            if k in sig.parameters
+        }
+        
         if inspect.iscoroutinefunction(func):
-            result = await func(**tool_args)
+            result = await func(**filtered_args)
         else:
-            result = func(**tool_args)
+            result = func(**filtered_args)
 
         return json.dumps(result, ensure_ascii=False, default=str)
 
     except TypeError as e:
         logger.error(f"Invalid arguments for tool '{tool_name}': {e} | args: {tool_args}")
-        return json.dumps({"error": f"Invalid arguments: {e}"})
+        # Identify missing arguments if possible and tell the LLM
+        error_msg = f"Invalid arguments for {tool_name}: {e}. Ensure you provide all required parameters."
+        return json.dumps({"error": error_msg})
     except Exception as e:
         logger.error(f"Tool execution error '{tool_name}': {e}")
-        return json.dumps({"error": str(e)})
+        return json.dumps({"error": f"Execution error: {str(e)}"})
 
 
 def _extract_generated_files(result_json: str) -> list[str]:
@@ -100,7 +103,7 @@ def _extract_generated_files(result_json: str) -> list[str]:
 
 
 async def _consume_stream(response) -> SimpleNamespace:
-    """Consuma uno stream OpenAI e restituisce un oggetto compatibile con il parser esistente."""
+    """Consumes an OpenAI stream and returns an object compatible with the existing parser."""
     full_content = ""
     full_reasoning = ""
     tool_calls_deltas = {}
@@ -110,11 +113,11 @@ async def _consume_stream(response) -> SimpleNamespace:
             continue
         delta = chunk.choices[0].delta
         
-        # Content standard
+        # Standard Content
         if hasattr(delta, 'content') and delta.content:
             full_content += delta.content
             
-        # Reasoning (Thinking) - Supporto per LM Studio 0.4+ e Qwen3
+        # Reasoning (Thinking) - Support for LM Studio 0.4+ and Qwen3
         if hasattr(delta, 'reasoning_content') and delta.reasoning_content:
             full_reasoning += delta.reasoning_content
             
@@ -135,8 +138,8 @@ async def _consume_stream(response) -> SimpleNamespace:
                         tool_calls_deltas[idx]["function"]["name"] += tc_delta.function.name
                     if tc_delta.function.arguments:
                         tool_calls_deltas[idx]["function"]["arguments"] += tc_delta.function.arguments
-
-    # Recomposizione tool calls
+ 
+    # Recomposing tool calls
     final_tool_calls = []
     for idx in sorted(tool_calls_deltas.keys()):
         tc = tool_calls_deltas[idx]
@@ -146,7 +149,7 @@ async def _consume_stream(response) -> SimpleNamespace:
             function=SimpleNamespace(name=tc["function"]["name"], arguments=tc["function"]["arguments"])
         ))
 
-    # Se il content è vuoto ma abbiamo il reasoning, usiamo quello come fallback testuale
+    # If content is empty but we have reasoning, use it as textual fallback
     combined_content = full_content
     if not combined_content and full_reasoning:
         combined_content = f"> [Thinking]\n> {full_reasoning}\n\n" + full_content if full_content else full_reasoning
@@ -157,6 +160,20 @@ async def _consume_stream(response) -> SimpleNamespace:
     )
 
 
+def _clean_response(text: str) -> str:
+    """Removes thinking blocks, tool tags, and other technical noise."""
+    # 1. Remove <thought>...</thought>
+    text = re.sub(r'<thought>.*?</thought>', '', text, flags=re.DOTALL)
+    # 2. Remove [THOUGHT]...[/THOUGHT]
+    text = re.sub(r'\[THOUGHT\].*?\[/THOUGHT\]', '', text, flags=re.DOTALL | re.IGNORECASE)
+    # 3. Remove tool command artifacts (e.g. call_tool(name=...))
+    text = re.sub(r'tool_call[:(].*?\)', '', text, flags=re.DOTALL | re.IGNORECASE)
+    # 4. Remove triple backticks artifacts often used for thinking
+    text = re.sub(r'```thought.*?```', '', text, flags=re.DOTALL | re.IGNORECASE)
+    
+    return text.strip()
+
+
 async def run_agent(
     user_message: str,
     image_path: str | None = None,
@@ -165,18 +182,18 @@ async def run_agent(
     store_history: bool = True,
 ) -> dict:
     """
-    Esegue il loop completo dell'agente per un messaggio.
+    Executes the full agent loop for a message.
     """
     tool_map = get_tool_map()
 
-    # ── Costruisci la lista messaggi ──────────────────────────
+    # ── Build message list ──────────────────────────────────
     system_prompt = build_system_prompt(agent_state=agent_state)
     history = get_recent_history(limit=10, session_id=session_id)
 
     messages = [{"role": "system", "content": system_prompt}]
     messages.extend(history)
 
-    # ── Current message (text or multimodal) ──────────────
+    # ── Current message (text or multimodal) ──────────────────
     if image_path and Path(image_path).exists():
         from src.tools.vision import build_vision_message
         user_msg = build_vision_message(user_message, image_path)
@@ -190,9 +207,10 @@ async def run_agent(
     messages.append(user_msg)
 
     # Save user message to history
-    save_conversation_message("user", user_message, session_id=session_id)
+    if store_history:
+        _, session_id = save_conversation_message("user", user_message, session_id=session_id)
 
-    # ── Reasoning loop ──────────────────────────────────
+    # ── Reasoning loop ──────────────────────────────────────
     generated_files: list[str] = []
     # Count of tools executed in current loop.
     # Sentinel activates ONLY if this is 0: so it doesn't block
@@ -202,8 +220,8 @@ async def run_agent(
     for iteration in range(_MAX_ITERATIONS):
         logger.info(f"🤖 Agent loop — iteration {iteration + 1}/{_MAX_ITERATIONS}")
 
-        # Creiamo un nuovo client pulito per ogni tentativo di inferenza
-        async with _make_client() as client:
+        # Create a clean client for each inference attempt
+        async with get_client() as client:
             try:
                 # Diagnostic log for prompt size
                 prompt_size = sum(len(m.get("content", "")) for m in messages if isinstance(m.get("content"), str))
@@ -216,7 +234,8 @@ async def run_agent(
                     tool_choice="auto",
                     temperature=0.1,
                     max_tokens=4096,
-                    stream=True
+                    stream=True,
+                    extra_body={"enable_thinking": False}
                 )
                 assistant_msg = await _consume_stream(response)
             except Exception as e:
@@ -274,7 +293,28 @@ async def run_agent(
                         else:
                             assistant_msg.tool_calls.append(qwen_call)
             except Exception as qe:
-                logger.warning(f"Qwen tag parsing error: {qe} | RAW: {assistant_msg.content[:200]}")
+                # Fallback parser for pseudo-XML: <function=web_search>\n<parameter=query>\nValue...
+                import re
+                try:
+                    xml_calls = re.findall(r"<function=([^>]+)>(.*?)(?=</tool_call>|<function=|$)", assistant_msg.content, re.DOTALL)
+                    for fn_name, params_str in xml_calls:
+                        args = {}
+                        param_matches = re.findall(r"<parameter=([^>]+)>(.*?)(?=<parameter=|$)", params_str, re.DOTALL)
+                        for p_name, p_val in param_matches:
+                            args[p_name.strip()] = p_val.strip()
+                        
+                        logger.info(f"🔧 Qwen XML tool call detected: {fn_name}")
+                        qwen_call = SimpleNamespace(
+                            id=f"qwen_xml_{iteration}_{fn_name}",
+                            type="function",
+                            function=SimpleNamespace(name=fn_name, arguments=json.dumps(args))
+                        )
+                        if not assistant_msg.tool_calls:
+                            assistant_msg.tool_calls = [qwen_call]
+                        else:
+                            assistant_msg.tool_calls.append(qwen_call)
+                except Exception as xml_e:
+                    logger.warning(f"Qwen tag parsing error: {qe} | XML Fallback error: {xml_e} | RAW: {assistant_msg.content[:200]}")
 
         # Support for legacy "TOOL: tool_name(...)" format
         if assistant_msg.content and "TOOL:" in assistant_msg.content and not assistant_msg.tool_calls:
@@ -307,7 +347,7 @@ async def run_agent(
                     else:
                         assistant_msg.tool_calls.append(manual_call)
                 except Exception as pe:
-                    logger.warning(f"Errore parsing argomenti manuali: {pe}")
+                    logger.warning(f"Error parsing manual arguments: {pe}")
 
         # ── INTEGRITY CONTROL (Sentinel 4.0 Pro) ─────────────────
         # Sentinel activates ONLY if no pending tool calls
@@ -318,8 +358,7 @@ async def run_agent(
             action_keywords = [
                 "created", "generated", "sent", "prepared", "written", "saved",
                 "completed", "updated", "set", "changed", "activated",
-                "monitoring", "subscribed", "watchman", "indexed",
-                "script", "write"
+                "monitoring", "subscribed", "watchman", "indexed"
             ]
             
             # Common words excluding false positives (informational)
@@ -354,15 +393,19 @@ async def run_agent(
                     })
                     continue
 
-        # ── No tool calls → final response ────────────────
+        # ── No tool calls → final response ───────────────────────
         if not assistant_msg.tool_calls:
-            final_text = assistant_msg.content or "✅ Task completed."
+            raw_text = assistant_msg.content or "✅ Task completed."
+            
+            # Clean technical artifacts that might leak to the user
+            final_text = _clean_response(raw_text)
+            
             if store_history:
                 save_conversation_message("assistant", final_text, session_id=session_id)
             logger.info(f"💬 Final response generated ({len(final_text)} chars)")
-            return {"text": final_text, "files": generated_files}
+            return {"text": final_text, "files": generated_files, "session_id": session_id}
 
-        # ── Pending tool calls to execute ────────────────────
+        # ── Pending tool calls to execute ────────────────────────
         # Add assistant message with tool calls to history
         assistant_dict: dict = {
             "role": "assistant",
@@ -424,18 +467,20 @@ async def run_agent(
         "content": "TIME EXHAUSTED / MAX ITERATIONS REACHED. Do NOT call more tools. Summarize IMMEDIATELY what you found in the previous steps for the user as completely as possible."
     })
     
-    try:
-        final_response = await client.chat.completions.create(
-            model=config.lm_studio_model,
-            messages=messages,
-            tools=TOOLS_SCHEMA,
-            tool_choice="none", # Disable tools to force response
-            temperature=0.5,
-        )
-        fallback = final_response.choices[0].message.content or "I gathered a lot of info but couldn't summarize it in time."
-    except Exception as e:
-        logger.error(f"Summary fallback failed: {e}")
-        fallback = "I finished the search operations. Check if I found what you were looking for in previous messages (if any)."
+    async with get_client() as client:
+        try:
+            final_response = await client.chat.completions.create(
+                model=config.lm_studio_model,
+                messages=messages,
+                tools=TOOLS_SCHEMA,
+                tool_choice="none", # Disable tools to force response
+                temperature=0.5,
+            )
+            fallback = final_response.choices[0].message.content or "I gathered a lot of info but couldn't summarize it in time."
+        except Exception as e:
+            logger.error(f"Summary fallback failed: {e}")
+            fallback = "I finished the search operations. Check if I found what you were looking for in previous messages (if any)."
 
-    save_conversation_message("assistant", fallback, session_id=session_id)
-    return {"text": fallback, "files": generated_files}
+    if store_history:
+        save_conversation_message("assistant", fallback, session_id=session_id)
+    return {"text": fallback, "files": generated_files, "session_id": session_id}

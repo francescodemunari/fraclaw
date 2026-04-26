@@ -1,0 +1,1 @@
+from datetime import datetime\ndef get_current_date_and_time():\n    now = datetime.now()\n    formatted_datetime = now.strftime("%Y-%m-%d %H:%M:%S")\n    print("Current Date and Time:", formatted_datetime)\ndef get_current_date_and_time():\n    get_current_date_and_time()

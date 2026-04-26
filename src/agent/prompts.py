@@ -28,6 +28,16 @@ def build_system_prompt(agent_state: str = None) -> str:
 3. **CALL THE TOOL NOW**: If you are thinking of replying "I've created the persona", STOP and call `manage_persona` instead.
 """
 
+    # 🧠 MEMORY RULE: Always save facts about the user
+    memory_rule = """
+### 🧠 PROACTIVE MEMORY RULE
+You have access to a persistent long-term memory via `save_user_fact`.
+- **AUTOMATICALLY SAVE** any personally relevant fact the user reveals: their name, job, location, preferences, ongoing projects, relationships, goals, or anything they explicitly want you to remember.
+- **DO NOT ASK FOR PERMISSION**: If the user says "my name is Francesco", call `save_user_fact` immediately with category="identity", key="name", value="Francesco". Do not wait to be asked.
+- **Categories to use**: "identity" (name, age, location), "preference" (likes, dislikes), "project" (ongoing work), "context" (anything else relevant).
+- If you are unsure a fact is worth saving, err on the side of saving it.
+"""
+
     # 2. System information (Date/Time)
     import datetime
     current_time = datetime.datetime.now().strftime("%d %B %Y, %H:%M:%S")
@@ -38,6 +48,7 @@ def build_system_prompt(agent_state: str = None) -> str:
 
 ## 🛠️ Active Modules
 - **Persona Engine**: You can create and switch personas (character and voice). If the user asks for a high-quality voice or a specific voice actor, set `premium_voice=True` in `manage_persona`. 
+- **Speech Synthesis**: You can generate standalone audio files (WAV) from any text. Use `generate_speech` for scripts, tutorial voiceovers, or when requested.
 - **Watchman (Web Monitoring)**: You can monitor websites/news. You will be awakened every X hours to check for updates. Use `manage_web_monitor`.
 - **Knowledge Base (RAG)**: You can read PDF/TXT files and save them to your long-term memory. Use `learn_from_document` and `search_knowledge`.
 """
@@ -60,4 +71,45 @@ You are in advanced programming mode.
     profile = get_profile_summary()
     profile_section = f"\n\n---\n\n{profile}" if profile else "\n\n---\n\n*No user profile recorded yet.*"
 
-    return persona["system_prompt"] + language_rule + integrity_rule + system_info + extra_capabilities + agent_instructions + profile_section
+    return (
+        f"{persona['system_prompt']}\n\n"
+        f"{language_rule}\n\n"
+        f"{integrity_rule}\n\n"
+        f"{memory_rule}\n\n"
+        f"{system_info}\n\n"
+        f"{extra_capabilities}\n\n"
+        f"{agent_instructions}\n\n"
+        f"{profile_section}"
+    )
+
+def get_narrator_prompt(persona_name: str, persona_instructions: str, context_notes: str) -> str:
+    """
+    Returns the prompt for the Narrator agent, which converts internal 
+    agent notes into a high-quality user-facing response.
+    """
+    return f"""
+    You are {persona_name}. {persona_instructions}
+    
+    CRITICAL: Your task is to transform the technical results provided in 'INTERNAL NOTES' 
+    into a narrative, natural, and helpful response for the User.
+    
+    RULES:
+    1. DO NOT mention internal agents (Coder, Analyst, etc.).
+    2. DO NOT mention you executed tools or commands.
+    3. If files were created or modified, describe what you did and ensure their paths are clearly highlighted.
+    4. Keep the tone consistent with your identity.
+    5. Be concise but warm.
+    
+    INTERNAL NOTES:
+    {context_notes}
+    """
+
+def get_title_generation_prompt(first_message: str) -> str:
+    """
+    Returns the prompt for generating a short chat title.
+    """
+    return (
+        "Given this first message of a chat, generate a title of MAXIMUM 3 words.\n"
+        "Respond ONLY with the title, no quotes or punctuation.\n\n"
+        f"Message: {first_message}"
+    )

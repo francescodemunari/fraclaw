@@ -40,7 +40,10 @@ def image_to_base64(image_path: str) -> dict:
             return {"error": f"Path is not a file: {image_path}"}
 
         suffix = p.suffix.lower()
-        mime_type = _MIME_MAP.get(suffix, "image/jpeg")
+        if suffix not in _MIME_MAP:
+            return {"error": f"Unsupported image format: {suffix}"}
+        
+        mime_type = _MIME_MAP[suffix]
 
         with open(p, "rb") as f:
             raw = f.read()

@@ -110,6 +110,7 @@ class ModelManager:
                     "context_length": context_length,
                     "flash_attention": True
                 }
+
                 async with session.post(f"{api_url}/api/v1/models/load", json=payload) as resp:
                     if resp.status == 200:
                         logger.success(f"🎊 Model {model_identifier} loaded and ready.")

@@ -9,23 +9,23 @@ echo  =========================================
 echo.
 
 :: Verifica che il venv esista
-if not exist ".venv\Scripts\python.exe" (
-    echo [ERRORE] Ambiente virtuale non trovato.
-    echo Assicurati di aver eseguito: py -3.12 -m venv .venv
+if not exist "..\.venv\Scripts\python.exe" (
+    echo [ERRORE] Ambiente virtuale non trovato in ..\.venv
+    echo Assicurati di aver configurato il venv nella root del progetto.
     pause
     exit /b 1
 )
 
 :: Avvio Backend in una finestra separata
 echo [1/2] Avvio Backend (porta 8000)...
-start "Fraclaw - Backend" cmd /k ".venv\Scripts\python.exe src\web\api.py"
+start "Fraclaw - Backend" cmd /k "..\.venv\Scripts\python.exe ..\src\web\api.py"
 
 :: Breve pausa per dare tempo al backend di inizializzarsi
 timeout /t 3 /nobreak > nul
 
 :: Avvio Frontend in una finestra separata
 echo [2/2] Avvio Frontend (porta 5173)...
-start "Fraclaw - Frontend" cmd /k "cd webapp && npm run dev"
+start "Fraclaw - Frontend" cmd /k "npm run dev"
 
 echo.
 echo  =========================================
@@ -34,6 +34,6 @@ echo   Backend:  http://localhost:8000
 echo   Frontend: http://localhost:5173
 echo  =========================================
 echo.
-echo  Per chiudere tutto, esegui: stop_webapp.bat
+echo  Per chiudere tutto, esegui: stop.bat
 echo.
 timeout /t 3 /nobreak > nul

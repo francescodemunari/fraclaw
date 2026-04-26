@@ -315,14 +315,14 @@ TOOLS_SCHEMA = [
         "type": "function",
         "function": {
             "name": "set_reminder",
-            "description": "Schedules a reminder or a task to be executed later. Automatically creates a Windows notification.",
+            "description": "Schedules a reminder or a task to be executed later.",
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "task": {"type": "string", "description": "What to remind."},
-                    "delay_minutes": {"type": "integer", "description": "Minutes from now."},
+                    "message": {"type": "string", "description": "The text content of the reminder (e.g., 'Take the medicine')."},
+                    "delay_minutes": {"type": "integer", "description": "Minutes from now until the reminder is sent."},
                 },
-                "required": ["task", "delay_minutes"],
+                "required": ["message", "delay_minutes"],
             },
         },
     },
@@ -413,19 +413,23 @@ TOOLS_SCHEMA = [
         "type": "function",
         "function": {
             "name": "generate_speech",
-            "description": "Converts text to an audio file using the current persona's voice settings.",
+            "description": "Synthesizes text into a high-quality audio file (WAV). Use this when the user specifically asks for an audio version of a script, a tutorial voiceover, or a standalone audio file.",
             "parameters": {
                 "type": "object",
                 "properties": {
                     "text": {
                         "type": "string",
-                        "description": "Text to convert to speech."
+                        "description": "The exact text to convert to speech.",
+                    },
+                    "voice": {
+                        "type": "string",
+                        "description": "Optional Edge-TTS voice ID. Only for LITE mode.",
                     }
                 },
-                "required": ["text"]
-            }
-        }
-    }
+                "required": ["text"],
+            },
+        },
+    },
 ]
 
 
@@ -513,10 +517,10 @@ def get_tool_map() -> dict[str, Callable]:
         "delete_user_fact": _delete_user_fact,
         "get_user_profile": _get_user_profile,
         "set_reminder": set_reminder,
-        "generate_speech": generate_speech,
         "manage_persona": manage_persona,
         "manage_voice_engine": manage_voice_engine,
         "manage_web_monitor": manage_web_monitor,
         "learn_from_document": learn_from_document,
         "search_knowledge": search_knowledge,
+        "generate_speech": generate_speech,
     }

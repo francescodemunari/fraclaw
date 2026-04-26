@@ -34,19 +34,23 @@ def _get_model():
     return _whisper_model
 
 
-def transcribe_audio(audio_path: str) -> dict:
+async def pre_load_model():
+    """Trigger the lazy loading of the model asynchronously."""
+    import asyncio
+    await asyncio.to_thread(_get_model)
+
+
+async def transcribe_audio(audio_path: str) -> dict:
     """
-    Transcribes an audio file into text.
+    Transcribes an audio file into text (Async version).
+    """
+    import asyncio
+    return await asyncio.to_thread(_transcribe_sync, audio_path)
 
-    Supported formats: .ogg, .mp3, .wav, .m4a, .flac, .webm
 
-    Args:
-        audio_path: Absolute path to the audio file.
-
-    Returns dict with:
-        - transcript: transcribed text
-        - language:   automatically detected language (e.g., "en", "it")
-        - duration_seconds: audio file duration
+def _transcribe_sync(audio_path: str) -> dict:
+    """
+    Internal synchronous transcription logic.
     """
     try:
         p = Path(audio_path)
@@ -57,7 +61,6 @@ def transcribe_audio(audio_path: str) -> dict:
         model = _get_model()
 
         # beam_size=5: good compromise between speed and accuracy
-        # language=None allows automatic language detection
         segments, info = model.transcribe(str(p), beam_size=5, language=None)
 
         # Iterate all segments and join them

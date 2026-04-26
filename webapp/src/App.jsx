@@ -333,10 +333,12 @@ function App() {
                             // Determine URL based on subfolder (uploads, workspace or output)
                             const isWorkspace = path.includes('workspace');
                             const isOutput = path.includes('output');
+                            const isGeneratedImage = path.includes('generated_images');
                             
                             let downloadUrl = `http://localhost:8000/uploads/${name}`;
                             if (isWorkspace) downloadUrl = `http://localhost:8000/workspace/${name}`;
                             if (isOutput) downloadUrl = `http://localhost:8000/outputs/${name}`;
+                            if (isGeneratedImage) downloadUrl = `http://localhost:8000/generated_images/${name}`;
 
                             if (isImage(name)) {
                               return (

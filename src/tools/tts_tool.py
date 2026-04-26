@@ -12,10 +12,12 @@ from pathlib import Path
 from datetime import datetime
 from loguru import logger
 from src.memory.preferences import get_active_persona
+from src.config import config
 
-# Directories
-OUTPUT_DIR = Path("data/output")
-VOICES_DIR = Path("data/voices")
+# Directories — resolved relative to project root regardless of working directory
+_PROJECT_ROOT = Path(__file__).parent.parent.parent
+OUTPUT_DIR = _PROJECT_ROOT / "data" / "output"
+VOICES_DIR = _PROJECT_ROOT / "data" / "voices"
 
 # Check for premium support
 try:
@@ -59,15 +61,17 @@ async def generate_speech(text: str, voice: str = None) -> dict:
     persona = get_active_persona()
     is_premium = persona.get("premium_voice", False)
     persona_name = persona.get("name", "Jarvis")
-    voice_id = voice or persona.get("voice_id", "en-GB-ThomasNeural")
+    voice_id = voice or persona.get("voice_id", "en-US-AndrewNeural")
 
     filename = f"voice_{datetime.now().strftime('%Y%m%d_%H%M%S')}.wav"
     filepath = OUTPUT_DIR / filename
 
-    if is_premium:
+    if is_premium and HAS_PREMIUM_LIBS:
         logger.info(f"💎 Using PREMIUM Engine (Chatterbox) for {persona_name}...")
         return await _generate_premium(text, persona_name, filepath, filename)
     else:
+        if is_premium and not HAS_PREMIUM_LIBS:
+            logger.warning(f"⚠️ Premium requested for {persona_name} but components missing. Falling back to LITE.")
         logger.info(f"⚡ Using LITE Engine (Edge-TTS) for {persona_name}...")
         return await _generate_lite(text, voice_id, filepath, filename)
 

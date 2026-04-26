@@ -6,12 +6,13 @@ from pathlib import Path
 from loguru import logger
 from src.memory.vector import store_memory, search_memory
 
-def learn_from_document(path: str) -> dict:
+def learn_from_document(path: str, label: str = "general") -> dict:
     """
     Reads a document (PDF, TXT, MD), splits it into chunks and saves it in long-term memory.
     
     Args:
         path: Absolute path of the file to index.
+        label: Category label for the knowledge (stored in metadata).
     """
     p = Path(path)
     if not p.exists():
@@ -42,23 +43,23 @@ def learn_from_document(path: str) -> dict:
         for i, chunk in enumerate(chunks):
             store_memory(
                 text=chunk,
-                metadata={"source": p.name, "path": str(p), "chunk": i},
+                metadata={"source": p.name, "path": str(p), "chunk": i, "label": label},
                 doc_id=f"{p.name}_{i}"
             )
             
         return {
             "status": "success", 
-            "message": f"Document '{p.name}' successfully indexed into {len(chunks)} fragments."
+            "message": f"Document '{p.name}' [{label}] successfully indexed into {len(chunks)} fragments."
         }
     except Exception as e:
         logger.error(f"Indexing error for {path}: {e}")
         return {"status": "error", "message": f"Internal error: {str(e)}"}
 
-def search_knowledge(query: str) -> dict:
+def search_knowledge(query: str, limit: int = 5) -> dict:
     """
     Searches the library of saved documents for information relevant to the query.
     """
-    results = search_memory(query, n_results=5)
+    results = search_memory(query, n_results=limit)
     if not results:
         return {"status": "success", "results": [], "message": "No information found in Knowledge Base."}
         
@@ -66,7 +67,8 @@ def search_knowledge(query: str) -> dict:
     for r in results:
         formatted.append({
             "content": r["text"],
-            "source": r["metadata"].get("source", "Unknown")
+            "source": r["metadata"].get("source", "Unknown"),
+            "label": r["metadata"].get("label", "general")
         })
         
     return {"status": "success", "results": formatted}

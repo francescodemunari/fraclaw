@@ -10,7 +10,8 @@ from pathlib import Path
 
 from loguru import logger
 
-OUTPUT_DIR = Path("data/output")
+_PROJECT_ROOT = Path(__file__).parent.parent.parent
+OUTPUT_DIR = _PROJECT_ROOT / "data" / "output"
 
 
 def _ensure_output_dir() -> None:

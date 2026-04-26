@@ -34,41 +34,34 @@ def web_search(query: str, max_results: int = 5) -> dict:
         logger.error(f"Web search error: {e}")
         return {"error": str(e), "query": query}
 
-def news_search(query: str, max_results: int = 5) -> dict:
+def news_search(query: str, max_results: int = 5, timelimit: str = None) -> dict:
     """
-    News-optimized search version to bypass common rate limits.
+    Searches DuckDuckGo News and returns recent news articles.
+    
+    CRITICAL INSTRUCTION: This tool only returns headlines and snippets. If the user expects 
+    detailed facts, you MUST use the `read_webpage` tool on one of the returned URLs to 
+    read the full text. Do not invent the article content!
+    
+    Args:
+        query: The news topic to search for.
+        max_results: Number of articles to return.
+        timelimit: Optional time filter. Can be 'd' (past day), 'w' (past week), 'm' (past month), 
+                   'y' (past year), or None (any time). Use 'd' if the user explicitly asks for "today".
     """
     try:
         from ddgs import DDGS
         results = []
         
-        # Expand query to force recent results without using API timelimits (unstable)
-        expanded_query = f"{query} latest news today"
-        
         with DDGS(timeout=10) as ddgs:
-            # Attempt 1: standard backend (full results, but higher rate limit risk)
-            try:
-                for r in ddgs.text(expanded_query, max_results=max_results):
-                    results.append({
-                        "title": r.get("title", ""),
-                        "url": r.get("href", ""),
-                        "date": "Today",
-                        "snippet": r.get("body", ""),
-                        "source": "Web"
-                    })
-            except Exception as e:
-                logger.warning(f"⚠️ Standard text search failed for news ({e}). Falling back to lite...")
-            
-            # Attempt 2: lite backend (highly resilient) if first attempt fails
-            if not results:
-                for r in ddgs.text(expanded_query, max_results=max_results, backend="lite"):
-                    results.append({
-                        "title": r.get("title", ""),
-                        "url": r.get("href", ""),
-                        "date": "Today (Lite)",
-                        "snippet": r.get("body", ""),
-                        "source": "Web (Lite)"
-                    })
+            # Use the dedicated news API to prevent hallucinated/generic results
+            for r in ddgs.news(query, max_results=max_results, timelimit=timelimit):
+                results.append({
+                    "title": r.get("title", ""),
+                    "url": r.get("url", ""),
+                    "date": r.get("date", "Today"),
+                    "snippet": r.get("body", ""),
+                    "source": r.get("source", "News")
+                })
 
         logger.info(f"📰 News search '{query}': {len(results)} results")
         return {"query": query, "results": results, "count": len(results)}
@@ -76,3 +69,4 @@ def news_search(query: str, max_results: int = 5) -> dict:
     except Exception as e:
         logger.error(f"General news search error: {e}")
         return {"error": str(e), "query": query}
+

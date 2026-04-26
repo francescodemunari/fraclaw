@@ -11,7 +11,10 @@ import re
 import asyncio
 from pathlib import Path
 from loguru import logger
-from src.agent.core import run_agent, _make_client
+
+from src.agent.core import run_agent
+from src.agent.utils import get_client
+from src.agent.prompts import get_narrator_prompt
 from src.agent.manager import ModelManager
 from src.config import config
 
@@ -25,25 +28,37 @@ class Orchestrator:
         """
         msg = message.lower()
         
-        # 1. CODER TRIGGER (Technical keywords)
-        # We notice "python" and "script" or code-specific terms.
-        # We explicitly EXCLUDE simple file creation like ".txt".
+        # 1. AUDIO TRIGGER — check BEFORE greetings so "hi, use your voice" routes correctly
+        audio_patterns = [
+            r"\bspeak\b", r"\baloud\b", r"\bvoice message\b", r"\baudio\b",
+            r"\bvoice\b", r"\btalk\b", r"\bsay it\b", r"\bread.*aloud\b",
+            r"\busing.*voice\b", r"\bwith.*voice\b", r"\bedge voice\b",
+            r"\btell me.*voice\b", r"\brespond.*voice\b", r"\banswer.*voice\b",
+            r"\bspeak.*response\b", r"\bsing\b"
+        ]
+        if any(re.search(p, msg) for p in audio_patterns):
+            logger.info("⚡ [FAST ROUTE] Detected AUDIO intent via keywords")
+            return "AUDIO"
+
+        # 2. CODER TRIGGER (Technical keywords)
         coder_patterns = [
             r"\bpython\b", r"\bscript\b", r"\bcoding\b", r"\bdevelop\b",
             r"\bprogram\b", r"\bclass\s+\w+", r"\bdef\s+\w+\(",
             r"\b\.py\b", r"\b\.js\b", r"\b\.cpp\b", r"\b\.java\b"
         ]
         if any(re.search(p, msg) for p in coder_patterns):
-            # Verify it's not JUST a txt file
             if "txt" not in msg or any(p in msg for p in ["python", "script", ".py"]):
                 logger.info("⚡ [FAST ROUTE] Detected CODER intent via keywords")
                 return "CODER"
 
-        # 2. AUDIO TRIGGER
-        audio_patterns = [r"\bspeak\b", r"\baloud\b", r"\bvoice message\b", r"\baudio\b", r"\bvoice\b", r"\btalk\b"]
-        if any(re.search(p, msg) for p in audio_patterns):
-            logger.info("⚡ [FAST ROUTE] Detected AUDIO intent via keywords")
-            return "AUDIO"
+        # 3. BASE TRIGGER (Greetings/Social)
+        base_patterns = [
+            r"\bciao\b", r"\bhello\b", r"\bhi\b", r"\bhey\b",
+            r"\bmi chiamo\b", r"\bi am\b", r"\bi'm\b", r"\bnice to meet you\b"
+        ]
+        if any(re.search(p, msg) for p in base_patterns):
+            logger.info("⚡ [FAST ROUTE] Detected BASE intent via conversational keywords")
+            return "BASE"
             
         return None
 
@@ -52,53 +67,47 @@ class Orchestrator:
         """
         Uses keywords first, then falls back to a constrained LLM call.
         """
-        # Step 1: Fast Routing
         fast_intent = Orchestrator._fast_route(message)
         if fast_intent:
             return fast_intent
 
-        # Step 2: LLM Validation for ambiguous cases
         if len(message) < 15:
             return "BASE"
 
-        client = _make_client()
-        prompt = (
-            "Analyze the user's message and respond ONLY with one of these words:\n"
-            "- 'CODER': For complex coding, full scripts, advanced debugging.\n"
-            "- 'AUDIO': For voice/speech/audio requests.\n"
-            "- 'BASE': For general chat, small fixes, info, or .txt files.\n\n"
-            f"Message: {message}\n"
-            "Category:"
-        )
-
-        try:
-            response = await client.chat.completions.create(
-                model=config.lm_studio_model,
-                messages=[
-                    {"role": "system", "content": "You are a conservative intent router. Respond with ONLY ONE WORD. NO REASONING. NO THOUGHTS. STOP IMMEDIATELY."},
-                    {"role": "user", "content": prompt}
-                ],
-                max_tokens=5,
-                temperature=0.0,
-                # Kill reasoning instantly
-                stop=["\n", "<thought>", "Reasoning:", "Thought:"] 
+        async with get_client() as client:
+            prompt = (
+                "Analyze the user's message and respond ONLY with one of these words:\n"
+                "- 'CODER': For complex coding, full scripts, advanced debugging.\n"
+                "- 'AUDIO': For voice/speech/audio requests.\n"
+                "- 'BASE': For general chat, small fixes, info, or .txt files.\n\n"
+                f"Message: {message}\n"
+                "Category:"
             )
-            intent = response.choices[0].message.content.strip().upper()
-            # Clean possible trailing punctuation
-            intent = re.sub(r'[^A-Z]', '', intent)
-            
-            if intent in ["CODER", "AUDIO", "BASE"]:
-                return intent
-        except Exception as e:
-            logger.error(f"Intent classification error: {e}")
+
+            try:
+                response = await client.chat.completions.create(
+                    model=config.lm_studio_model,
+                    messages=[
+                        {"role": "system", "content": "You are a conservative intent router. Respond with ONLY ONE WORD. NO REASONING. NO THOUGHTS. STOP IMMEDIATELY."},
+                        {"role": "user", "content": prompt}
+                    ],
+                    max_tokens=5,
+                    temperature=0.0,
+                    stop=["\n", "<thought>", "Reasoning:", "Thought:"] 
+                )
+                intent = response.choices[0].message.content.strip().upper()
+                intent = re.sub(r'[^A-Z]', '', intent)
+                
+                if intent in ["CODER", "AUDIO", "BASE"]:
+                    return intent
+            except Exception as e:
+                logger.error(f"Intent classification error: {e}")
         
         return "BASE"
 
     @staticmethod
     async def run(user_message: str, telegram_update=None, image_path: str = None, session_id: int = None) -> dict:
         """Executes the full orchestration cycle."""
-        # Save the FINAL base model from initial configuration 
-        # to ensure we always return to it regardless of what happens next.
         target_base = config.lm_studio_model
         
         # 1. Understand user intent
@@ -115,26 +124,23 @@ class Orchestrator:
             target_coder = config.llm_model_coder
             logger.info(f"👨‍💻 STEP 1: Technical Execution with {target_coder}")
             
-            # Safety initialization to avoid UnboundLocalError in case of crash/reload
             coder_result = {"text": "Operation interrupted or not completed.", "files": []}
             
             try:
-                await ModelManager.ensure_model(target_coder)
+                await ModelManager.ensure_model(target_coder, min_context=20000)
                 config.lm_studio_model = target_coder
                 
-                # Inference engine stabilization
                 logger.info("🕒 Stabilizing inference engine (2s)...")
                 await asyncio.sleep(2)
                 
-                # Silent execution of Coder (technical work)
                 coder_result = await run_agent(user_message, image_path=image_path, agent_state="CODER", session_id=session_id, store_history=False)
+                session_id = coder_result.get("session_id", session_id)
                 
             except Exception as e:
                 logger.error(f"❌ Error during Coder execution: {e}")
                 coder_result = {"text": f"Error during technical execution: {str(e)}", "files": []}
             
             finally:
-                # --- GUARANTEED VRAM CLEANUP ---
                 logger.warning("🧹 [FORCE CLEANUP] Mandatory VRAM liberation...")
                 await ModelManager.unload_all_models()
                 
@@ -149,27 +155,23 @@ class Orchestrator:
                 
                 logger.info(f"✨ Model {target_base} operational. Generating final confirmation...")
                 
-                # Narrative message from Base model (Narrator)
-                narrative_prompt = (
-                    "OPERATION COMPLETED. Act as Fraclaw's Narrator.\n"
-                    f"TECHNICAL OUTCOME: {coder_result['text']}\n"
-                    f"FILES CREATED: {coder_result['files']}\n\n"
-                    "INSTRUCTIONS FOR YOU:\n"
-                    "1. Announce to the user that the task has been finished successfully.\n"
-                    "2. Use your premium and elegant style.\n"
-                    "3. Start DIRECTLY with your message.\n"
-                    "4. DO NOT add separators like '---', '***' or labels like 'Fraclaw Narrator:'.\n"
-                    "5. DO NOT repeat technical data or these instructions word for word."
+                # Retrieve persona info for the narrator
+                from src.memory.preferences import get_active_persona
+                persona = get_active_persona()
+                
+                narrative_prompt = get_narrator_prompt(
+                    persona_name=persona['name'],
+                    persona_instructions=persona['system_prompt'],
+                    context_notes=f"TECHNICAL OUTCOME: {coder_result['text']}\nFILES CREATED: {coder_result['files']}"
                 )
                 
-                # Load narration result
                 final_result = await run_agent(narrative_prompt, agent_state="BASE", session_id=session_id, store_history=False)
                 
                 # MANUALLY save only the final assistant response to DB
                 from src.memory.preferences import save_conversation_message
-                save_conversation_message("assistant", final_result["text"], session_id=session_id)
+                _, session_id = save_conversation_message("assistant", final_result["text"], session_id=session_id)
+                final_result["session_id"] = session_id
                 
-                # Add coder files to the final dictionary for the download button
                 coder_files = coder_result.get("files", [])
                 if "files" not in final_result:
                     final_result["files"] = []
@@ -184,24 +186,31 @@ class Orchestrator:
                 return coder_result
 
         elif intent == "AUDIO":
-            logger.info("🎤 Starting Premium Audio module (Chatterbox)")
-            # Standard audio flow
-            await ModelManager.ensure_model(target_base, min_context=20000)
+            logger.info("🎤 Starting Audio module (Chatterbox)")
+            await ModelManager.ensure_model(target_base)
             text_result = await run_agent(user_message, image_path=image_path, agent_state=intent, session_id=session_id)
+            session_id = text_result.get("session_id", session_id)
             
-            # Unload LLM to free VRAM for Chatterbox GPU generation
-            await ModelManager.unload_all_models()
+            from src.memory.preferences import get_active_persona
+            persona = get_active_persona()
+            is_premium = persona.get("premium_voice", False)
+            
+            if is_premium:
+                await ModelManager.unload_all_models()
+                
             from src.tools.tts_tool import generate_speech
             audio_res = await generate_speech(text_result["text"])
             if audio_res and "path" in audio_res:
                 text_result["files"].append(str(Path(audio_res["path"]).absolute()))
             
-            logger.info(f"🔄 Final cleanup: Reloading {target_base}")
-            await ModelManager.ensure_model(target_base, min_context=20000)
+            if is_premium:
+                logger.info(f"🔄 Final cleanup: Reloading {target_base}")
+                await ModelManager.ensure_model(target_base)
+                
             return text_result
         
         # 3. Standard BASE flow
         logger.debug(f"⚖️ Standard flow for {intent}: Ensuring {target_base}")
-        await ModelManager.ensure_model(target_base, min_context=20000)
+        await ModelManager.ensure_model(target_base)
         config.lm_studio_model = target_base
         return await run_agent(user_message, image_path=image_path, agent_state="BASE", session_id=session_id)
