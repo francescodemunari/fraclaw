@@ -1,6 +1,10 @@
-# FRACLAW - Your Recursive Local AI Agent
+![Fraclaw Banner](webapp/public/banner.png)
 
-A multi-tool assistant that runs entirely on your hardware.
+<h1 align="center">FRACLAW - Your Recursive Local AI Agent</h1>
+
+<p align="center">
+  <strong>A multi-tool assistant that runs entirely on your hardware.</strong>
+</p>
 
 ---
 
