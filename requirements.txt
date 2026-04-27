@@ -8,12 +8,13 @@ uvicorn
 python-socketio
 loguru
 python-dotenv
+python-multipart
 aiohttp
 httpx
 
 # Memory & AI Logic
 openai
-sqlite3-api
+chromadb
 pydantic
 tiktoken
 
