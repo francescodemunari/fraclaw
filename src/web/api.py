@@ -62,7 +62,6 @@ app = FastAPI(title="Fraclaw Web API", version="1.0", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -193,32 +192,23 @@ async def get_session_messages(session_id: int):
             "SELECT id, role, content, timestamp FROM conversations WHERE session_id = ? ORDER BY timestamp ASC",
             (session_id,)
         ).fetchall()
-        
+
         messages = []
         for row in rows:
-            dt = row["timestamp"]
-            if dt and " " in dt and "T" not in dt:
-                dt = dt.replace(" ", "T") + "Z"
-                
-            msg_dict = {
-                "id": row["id"],
-                "role": row["role"],
-                "content": row["content"],
-                "timestamp": dt
-            }
-            
-            # Get attachments... (logic below continues)
-            msg_id = row['id']
-            # Get attachments for each message
-            attachments = conn.execute(
-                "SELECT file_path, file_name FROM attachments WHERE message_id = ?",
-                (msg_id,)
-            ).fetchall()
-            
+            # Build dict from row, then apply ISO8601 timestamp fix
             msg_dict = dict(row)
-            msg_dict['files'] = [a['file_path'] for a in attachments]
+            dt = msg_dict.get("timestamp", "")
+            if dt and " " in dt and "T" not in dt:
+                msg_dict["timestamp"] = dt.replace(" ", "T") + "Z"
+
+            # Attach linked files
+            attachments = conn.execute(
+                "SELECT file_path FROM attachments WHERE message_id = ?",
+                (row["id"],)
+            ).fetchall()
+            msg_dict["files"] = [a["file_path"] for a in attachments]
             messages.append(msg_dict)
-            
+
         conn.close()
         return {"messages": messages}
     except Exception as e:
@@ -250,7 +240,11 @@ async def purge_system():
         cursor.execute("DELETE FROM sessions")
         cursor.execute("DELETE FROM user_facts")
         cursor.execute("DELETE FROM web_monitors")
-        cursor.execute("DELETE FROM sqlite_sequence")
+        # sqlite_sequence only exists if AUTOINCREMENT has been used
+        try:
+            cursor.execute("DELETE FROM sqlite_sequence")
+        except Exception:
+            pass
         
         conn.commit()
         conn.close()
@@ -319,11 +313,7 @@ async def generate_chat_title(first_message: str) -> str:
 
 # --- Socket.IO Real-time Pipeline ---
 
-@sio.event
-async def connect(sid, environ):
-    """Initial handler for incoming socket connections."""
-    logger.info(f"🌐 Client Connected: {sid}")
-    await sio.emit('system_log', {'message': '[SYS] Neural Socket Link Active.'}, to=sid)
+# NOTE: Connection handling is done exclusively via @sio.on('connect') below.
 
 async def get_all_sessions_json():
     """Helper to fetch formatted session list."""

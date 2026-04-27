@@ -31,7 +31,7 @@ def _get_collection() -> chromadb.Collection:
 
         _client = chromadb.PersistentClient(path=str(chroma_path))
         _collection = _client.get_or_create_collection(
-            name="demuclaw_memory",
+            name="fraclaw_memory",
             # cosine distance: best for semantic text
             metadata={"hnsw:space": "cosine"},
         )
@@ -118,7 +118,7 @@ def clear_all_memories() -> bool:
             _get_collection()
         
         # Delete and recreate collection
-        _client.delete_collection("demuclaw_memory")
+        _client.delete_collection("fraclaw_memory")
         _collection = None
         _get_collection()
         logger.warning("☣️ Vectors reset (ChromaDB Nuclear Reset)")

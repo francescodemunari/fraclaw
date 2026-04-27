@@ -109,16 +109,15 @@ class Config:
     )
 
     def validate(self) -> "Config":
-        """Validates critical fields and raises an error if missing."""
-        errors = []
+        """Validates critical fields and warns about optional missing config."""
         if not self.telegram_token:
-            errors.append("TELEGRAM_TOKEN not set in .env")
+            logger.warning(
+                "⚠️ TELEGRAM_TOKEN not set. Telegram bot features will be unavailable."
+            )
         if not self.telegram_allowed_user_id:
-            errors.append("TELEGRAM_ALLOWED_USER_ID not set in .env")
-        if errors:
-            for e in errors:
-                logger.error(f"❌ Config error: {e}")
-            raise ValueError(f"Invalid configuration: {', '.join(errors)}")
+            logger.warning(
+                "⚠️ TELEGRAM_ALLOWED_USER_ID not set. Telegram bot will reject all messages."
+            )
         logger.info(
             f"✅ Config loaded — Model: {self.lm_studio_model} "
             f"| VRAM: {self.vram_mode} "

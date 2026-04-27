@@ -28,8 +28,9 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from src.agent.core import run_agent
 from src.config import config
 
-# Temporary folder for files downloaded from Telegram
-TEMP_DIR = Path("data/temp")
+# Temporary folder for files downloaded from Telegram — anchored to the project root
+_PROJECT_ROOT = Path(__file__).parent.parent.parent
+TEMP_DIR = _PROJECT_ROOT / "data" / "temp"
 TEMP_DIR.mkdir(parents=True, exist_ok=True)
 
 def escape_markdown(text: str) -> str:
@@ -150,14 +151,17 @@ async def clear_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
         return
         
     from src.memory.database import get_connection
+    conn = None
     try:
         conn = get_connection()
         conn.execute("DELETE FROM conversations")
         conn.commit()
-        conn.close()
         await update.message.reply_text("🧹 Short-term memory cleared!")
     except Exception as e:
         await update.message.reply_text(f"❌ Error during clearing: {e}")
+    finally:
+        if conn:
+            conn.close()
 
 
 async def reset_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -167,14 +171,12 @@ async def reset_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
         return
         
     from src.memory.database import get_connection
+    conn = None
     try:
         conn = get_connection()
-        # Clear conversations
         conn.execute("DELETE FROM conversations")
-        # Clear long-term facts
         conn.execute("DELETE FROM user_facts")
         conn.commit()
-        conn.close()
         await update.message.reply_text("💥 Total reset completed.\n\nAll short-term memory and long-term facts have been formatted. Fraclaw is now a clean slate.")
     except Exception as e:
         await update.message.reply_text(f"❌ Error during reset: {e}")

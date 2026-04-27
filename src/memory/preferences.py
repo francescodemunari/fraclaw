@@ -182,7 +182,9 @@ def get_recent_history(limit: int = 10, session_id: int = None) -> list[dict]:
         if session_id is None:
             cursor.execute("SELECT id FROM sessions ORDER BY created_at DESC LIMIT 1")
             row = cursor.fetchone()
-            session_id = row["id"] if row else 1
+            if not row:
+                return []
+            session_id = row["id"]
 
         cursor.execute(
             """

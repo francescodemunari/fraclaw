@@ -6,9 +6,6 @@ Leverages python-telegram-bot's JobQueue.
 from loguru import logger
 from telegram.ext import JobQueue
 
-import hashlib
-from datetime import datetime
-
 _job_queue: JobQueue | None = None
 _user_id: int | None = None
 _broadcast_callback = None

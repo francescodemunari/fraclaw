@@ -3,9 +3,6 @@ tts_tool.py — Hybrid Speech Synthesis Engine.
 Supports Premium (Chatterbox / Local) and Lite (Edge-TTS / Fast) synthesis.
 """
 
-import os
-import torch
-import soundfile as sf
 import asyncio
 import edge_tts
 from pathlib import Path

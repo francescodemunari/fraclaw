@@ -23,7 +23,7 @@ pydantic
 tiktoken
 
 # Tools - Search & Scraping
-duckduckgo-search
+ddgs
 beautifulsoup4
 readability-lxml
 lxml
