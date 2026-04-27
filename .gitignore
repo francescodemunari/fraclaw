@@ -23,14 +23,19 @@ webapp/.svelte-kit/
 webapp/.next/
 .eslintcache
 
-# --- Data & Workspace (Keep structure, ignore content) ---
-# We ignore the actual files to protect your privacy and reduce repo size
-data/output/*
-data/uploads/*
-data/workspace/*
-data/voices/*.wav
+# --- Data & Workspace (Ignore ALL personal/runtime content) ---
+data/**/*
+!data/
+!data/**/
+!data/.gitkeep
 !data/voices/default_ref.wav
 
+# Explicitly exclude common dynamic files
+*.db
+*.db-journal
+*.sqlite3
+data/*.md
+data/*.log
 # --- IDE & System ---
 .vscode/
 .idea/
