@@ -12,6 +12,7 @@ python-multipart
 python-telegram-bot
 aiohttp
 httpx
+torch
 
 # Memory & AI Logic
 openai
