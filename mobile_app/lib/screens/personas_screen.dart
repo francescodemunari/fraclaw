@@ -23,27 +23,37 @@ class PersonasScreen extends StatelessWidget {
           'NEURAL IDENTITIES',
           style: Theme.of(context).textTheme.titleLarge?.copyWith(
             letterSpacing: 4,
-            shadows: [Shadow(color: AppTheme.neonCyan.withValues(alpha: 0.5), blurRadius: 10)],
+            shadows: [
+              Shadow(
+                color: AppTheme.neonCyan.withValues(alpha: 0.5),
+                blurRadius: 10,
+              ),
+            ],
           ),
         ),
       ),
       body: AuroraBackground(
         child: socketService.personas.isEmpty
-            ? const Center(child: CircularProgressIndicator(color: AppTheme.primaryCyan))
+            ? const Center(
+                child: CircularProgressIndicator(color: AppTheme.primaryCyan),
+              )
             : ListView.builder(
                 padding: const EdgeInsets.fromLTRB(20, 120, 20, 40),
                 itemCount: socketService.personas.length,
                 itemBuilder: (context, index) {
                   final persona = socketService.personas[index];
                   final personaName = persona['name'] as String;
-                  final personaDescription = persona['description'] as String? ?? 'Neural Identity';
+                  final personaDescription =
+                      persona['description'] as String? ?? 'Neural Identity';
                   final isActive = socketService.activePersona == personaName;
 
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 20),
                     child: GestureDetector(
                       onTap: () async {
-                        final success = await socketService.activatePersona(personaName);
+                        final success = await socketService.activatePersona(
+                          personaName,
+                        );
                         if (success && context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             AppUI.snackBar('Switched to $personaName identity'),
@@ -54,18 +64,22 @@ class PersonasScreen extends StatelessWidget {
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(24),
                           border: Border.all(
-                            color: isActive 
-                              ? AppTheme.primaryCyan.withValues(alpha: 0.5) 
-                              : Colors.white.withValues(alpha: 0.1),
+                            color: isActive
+                                ? AppTheme.primaryCyan.withValues(alpha: 0.5)
+                                : Colors.white.withValues(alpha: 0.1),
                             width: isActive ? 2 : 1,
                           ),
-                          boxShadow: isActive ? [
-                            BoxShadow(
-                              color: AppTheme.primaryCyan.withValues(alpha: 0.2),
-                              blurRadius: 15,
-                              spreadRadius: 1,
-                            )
-                          ] : [],
+                          boxShadow: isActive
+                              ? [
+                                  BoxShadow(
+                                    color: AppTheme.primaryCyan.withValues(
+                                      alpha: 0.2,
+                                    ),
+                                    blurRadius: 15,
+                                    spreadRadius: 1,
+                                  ),
+                                ]
+                              : [],
                         ),
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(24),
@@ -82,11 +96,17 @@ class PersonasScreen extends StatelessWidget {
                                     height: 56,
                                     decoration: BoxDecoration(
                                       shape: BoxShape.circle,
-                                      color: isActive 
-                                        ? AppTheme.primaryCyan.withValues(alpha: 0.2) 
-                                        : Colors.white.withValues(alpha: 0.05),
+                                      color: isActive
+                                          ? AppTheme.primaryCyan.withValues(
+                                              alpha: 0.2,
+                                            )
+                                          : Colors.white.withValues(
+                                              alpha: 0.05,
+                                            ),
                                       border: Border.all(
-                                        color: isActive ? AppTheme.primaryCyan : Colors.white12,
+                                        color: isActive
+                                            ? AppTheme.primaryCyan
+                                            : Colors.white12,
                                         width: 1.5,
                                       ),
                                     ),
@@ -94,27 +114,36 @@ class PersonasScreen extends StatelessWidget {
                                       child: Image.asset(
                                         'assets/${personaName.toLowerCase()}.png',
                                         fit: BoxFit.cover,
-                                        errorBuilder: (context, error, stackTrace) {
-                                          return Center(
-                                            child: Icon(
-                                              isActive ? Icons.psychology : Icons.psychology_outlined,
-                                              color: isActive ? AppTheme.primaryCyan : Colors.white38,
-                                              size: 30,
-                                            ),
-                                          );
-                                        },
+                                        errorBuilder:
+                                            (context, error, stackTrace) {
+                                              return Center(
+                                                child: Icon(
+                                                  isActive
+                                                      ? Icons.psychology
+                                                      : Icons
+                                                            .psychology_outlined,
+                                                  color: isActive
+                                                      ? AppTheme.primaryCyan
+                                                      : Colors.white38,
+                                                  size: 30,
+                                                ),
+                                              );
+                                            },
                                       ),
                                     ),
                                   ),
                                   const SizedBox(width: 20),
                                   Expanded(
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         Text(
                                           personaName.toUpperCase(),
                                           style: TextStyle(
-                                            color: isActive ? Colors.white : Colors.white70,
+                                            color: isActive
+                                                ? Colors.white
+                                                : Colors.white70,
                                             fontWeight: FontWeight.w900,
                                             letterSpacing: 1.5,
                                             fontSize: 16,
@@ -122,9 +151,13 @@ class PersonasScreen extends StatelessWidget {
                                         ),
                                         const SizedBox(height: 4),
                                         Text(
-                                          isActive ? 'Currently Active' : personaDescription,
+                                          isActive
+                                              ? 'Currently Active'
+                                              : personaDescription,
                                           style: TextStyle(
-                                            color: isActive ? AppTheme.neonCyan : Colors.white30,
+                                            color: isActive
+                                                ? AppTheme.neonCyan
+                                                : Colors.white30,
                                             fontSize: 12,
                                             fontWeight: FontWeight.w300,
                                           ),
@@ -133,7 +166,10 @@ class PersonasScreen extends StatelessWidget {
                                     ),
                                   ),
                                   if (isActive)
-                                    const Icon(Icons.check_circle_rounded, color: AppTheme.primaryCyan),
+                                    const Icon(
+                                      Icons.check_circle_rounded,
+                                      color: AppTheme.primaryCyan,
+                                    ),
                                 ],
                               ),
                             ),

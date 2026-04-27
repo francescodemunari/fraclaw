@@ -30,7 +30,7 @@ class _MemoryScreenState extends State<MemoryScreen> {
 
   Future<void> _pickAndUpload() async {
     final socketService = context.read<SocketService>();
-    
+
     FilePickerResult? result = await FilePicker.platform.pickFiles(
       type: FileType.any,
       allowMultiple: false,
@@ -43,10 +43,15 @@ class _MemoryScreenState extends State<MemoryScreen> {
       });
 
       try {
-        var request = http.MultipartRequest('POST', Uri.parse('${socketService.serverUrl}/api/upload'));
-        
+        var request = http.MultipartRequest(
+          'POST',
+          Uri.parse('${socketService.serverUrl}/api/upload'),
+        );
+
         if (Platform.isWindows || Platform.isAndroid || Platform.isIOS) {
-          request.files.add(await http.MultipartFile.fromPath('file', result.files.first.path!));
+          request.files.add(
+            await http.MultipartFile.fromPath('file', result.files.first.path!),
+          );
         }
 
         var response = await request.send();
@@ -55,7 +60,10 @@ class _MemoryScreenState extends State<MemoryScreen> {
           setState(() => _statusMessage = '✅ File indexed successfully!');
           socketService.fetchMemories(); // Refresh list if upload affects facts
         } else {
-          setState(() => _statusMessage = '❌ Upload failed (Error ${response.statusCode})');
+          setState(
+            () => _statusMessage =
+                '❌ Upload failed (Error ${response.statusCode})',
+          );
         }
       } catch (e) {
         setState(() => _statusMessage = '❌ Error: $e');
@@ -81,14 +89,19 @@ class _MemoryScreenState extends State<MemoryScreen> {
           style: Theme.of(context).textTheme.titleLarge?.copyWith(
             letterSpacing: 4,
             fontWeight: FontWeight.w900,
-            shadows: [Shadow(color: AppTheme.neonCyan.withValues(alpha: 0.5), blurRadius: 10)],
+            shadows: [
+              Shadow(
+                color: AppTheme.neonCyan.withValues(alpha: 0.5),
+                blurRadius: 10,
+              ),
+            ],
           ),
         ),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh, color: Colors.white60),
             onPressed: () => service.fetchMemories(),
-          )
+          ),
         ],
       ),
       body: AuroraBackground(
@@ -107,10 +120,24 @@ class _MemoryScreenState extends State<MemoryScreen> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _isUploading ? null : _pickAndUpload,
         backgroundColor: AppTheme.primaryCyan,
-        icon: _isUploading 
-          ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-          : const Icon(Icons.add_to_photos_outlined, color: Colors.white),
-        label: Text(_isUploading ? 'INDEXING...' : 'EXPAND KNOWLEDGE', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, letterSpacing: 1)),
+        icon: _isUploading
+            ? const SizedBox(
+                width: 18,
+                height: 18,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.white,
+                ),
+              )
+            : const Icon(Icons.add_to_photos_outlined, color: Colors.white),
+        label: Text(
+          _isUploading ? 'INDEXING...' : 'EXPAND KNOWLEDGE',
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 1,
+          ),
+        ),
       ),
     );
   }
@@ -125,8 +152,21 @@ class _MemoryScreenState extends State<MemoryScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
           child: Row(
             children: [
-              Expanded(child: Text(_statusMessage!, style: TextStyle(color: _statusMessage!.contains('✅') ? Colors.greenAccent : Colors.redAccent, fontSize: 13))),
-              IconButton(icon: const Icon(Icons.close, size: 16, color: Colors.white30), onPressed: () => setState(() => _statusMessage = null))
+              Expanded(
+                child: Text(
+                  _statusMessage!,
+                  style: TextStyle(
+                    color: _statusMessage!.contains('✅')
+                        ? Colors.greenAccent
+                        : Colors.redAccent,
+                    fontSize: 13,
+                  ),
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.close, size: 16, color: Colors.white30),
+                onPressed: () => setState(() => _statusMessage = null),
+              ),
             ],
           ),
         ),
@@ -139,15 +179,29 @@ class _MemoryScreenState extends State<MemoryScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.psychology_outlined, size: 80, color: Colors.white.withValues(alpha: 0.05)),
+          Icon(
+            Icons.psychology_outlined,
+            size: 80,
+            color: Colors.white.withValues(alpha: 0.05),
+          ),
           const SizedBox(height: 20),
-          Text('COGNITIVE VOID', style: TextStyle(color: Colors.white.withValues(alpha: 0.2), letterSpacing: 5, fontWeight: FontWeight.w100)),
+          Text(
+            'COGNITIVE VOID',
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.2),
+              letterSpacing: 5,
+              fontWeight: FontWeight.w100,
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildMemoriesList(List<Map<String, dynamic>> memories, SocketService service) {
+  Widget _buildMemoriesList(
+    List<Map<String, dynamic>> memories,
+    SocketService service,
+  ) {
     return ListView.builder(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
       itemCount: memories.length,
@@ -159,20 +213,48 @@ class _MemoryScreenState extends State<MemoryScreen> {
             borderRadius: 20,
             opacity: 0.05,
             child: ListTile(
-              contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 20,
+                vertical: 8,
+              ),
               leading: Container(
                 padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(color: AppTheme.primaryCyan.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
-                child: Icon(_getIconForCategory(m['category']), color: AppTheme.primaryCyan, size: 20),
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryCyan.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(
+                  _getIconForCategory(m['category']),
+                  color: AppTheme.primaryCyan,
+                  size: 20,
+                ),
               ),
-              title: Text(m['key'], style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
+              title: Text(
+                m['key'],
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
+              ),
               subtitle: Padding(
                 padding: const EdgeInsets.only(top: 4.0),
-                child: Text(m['value'], style: TextStyle(color: Colors.white70.withValues(alpha: 0.5), fontSize: 13)),
+                child: Text(
+                  m['value'],
+                  style: TextStyle(
+                    color: Colors.white70.withValues(alpha: 0.5),
+                    fontSize: 13,
+                  ),
+                ),
               ),
               trailing: IconButton(
-                icon: const Icon(Icons.delete_sweep_outlined, color: Colors.redAccent, size: 20),
-                onPressed: () => _confirmDelete(m['category'], m['key'], service),
+                icon: const Icon(
+                  Icons.delete_sweep_outlined,
+                  color: Colors.redAccent,
+                  size: 20,
+                ),
+                onPressed: () =>
+                    _confirmDelete(m['category'], m['key'], service),
               ),
             ),
           ),
@@ -183,14 +265,22 @@ class _MemoryScreenState extends State<MemoryScreen> {
 
   IconData _getIconForCategory(String? category) {
     switch (category?.toLowerCase()) {
-      case 'personal': return Icons.person_outline;
-      case 'project': return Icons.work_outline;
-      case 'preference': return Icons.settings_suggest_outlined;
-      default: return Icons.memory_outlined;
+      case 'personal':
+        return Icons.person_outline;
+      case 'project':
+        return Icons.work_outline;
+      case 'preference':
+        return Icons.settings_suggest_outlined;
+      default:
+        return Icons.memory_outlined;
     }
   }
 
-  void _confirmDelete(String category, String key, SocketService service) async {
+  void _confirmDelete(
+    String category,
+    String key,
+    SocketService service,
+  ) async {
     final confirm = await AppUI.confirmDialog(
       context,
       title: 'Forget Fact?',

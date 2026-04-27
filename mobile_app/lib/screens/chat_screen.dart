@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'dart:io';
 import 'dart:math';
 import 'package:flutter/material.dart';
@@ -48,10 +47,7 @@ class CodeElementBuilder extends MarkdownElementBuilder {
           language: language.isEmpty ? 'plaintext' : language,
           theme: atomOneDarkTheme,
           padding: const EdgeInsets.all(12),
-          textStyle: const TextStyle(
-            fontFamily: 'monospace',
-            fontSize: 12,
-          ),
+          textStyle: const TextStyle(fontFamily: 'monospace', fontSize: 12),
         ),
       ),
     );
@@ -68,7 +64,8 @@ class ChatScreen extends StatefulWidget {
 class _ChatScreenState extends State<ChatScreen>
     with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   final TextEditingController _controller = TextEditingController();
-  final TextEditingController _historySearchController = TextEditingController();
+  final TextEditingController _historySearchController =
+      TextEditingController();
   final ScrollController _scrollController = ScrollController();
   String _historySearchQuery = '';
   final AudioRecorder _audioRecorder = AudioRecorder();
@@ -89,11 +86,11 @@ class _ChatScreenState extends State<ChatScreen>
 
     // Add observer for lifecycle events
     WidgetsBinding.instance.addObserver(this);
-    
+
     // Auto-fetch sessions on start and connect
     WidgetsBinding.instance.addPostFrameCallback((_) {
-       context.read<SocketService>().fetchSessions();
-       context.read<SocketService>().fetchPersonas();
+      context.read<SocketService>().fetchSessions();
+      context.read<SocketService>().fetchPersonas();
     });
   }
 
@@ -216,7 +213,9 @@ class _ChatScreenState extends State<ChatScreen>
             foregroundColor: AppTheme.primaryCyan,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(10),
-              side: BorderSide(color: AppTheme.primaryCyan.withValues(alpha: 0.5)),
+              side: BorderSide(
+                color: AppTheme.primaryCyan.withValues(alpha: 0.5),
+              ),
             ),
           ),
           child: const Text('Save & Connect'),
@@ -261,10 +260,18 @@ class _ChatScreenState extends State<ChatScreen>
           toolbarHeight: 70,
           leading: IconButton(
             icon: const Icon(Icons.menu_rounded, color: Colors.white70),
-            onPressed: () => _pageController.animateToPage(0, duration: const Duration(milliseconds: 400), curve: Curves.easeOutCubic),
+            onPressed: () => _pageController.animateToPage(
+              0,
+              duration: const Duration(milliseconds: 400),
+              curve: Curves.easeOutCubic,
+            ),
           ),
           title: GestureDetector(
-            onTap: () => _pageController.animateToPage(1, duration: const Duration(milliseconds: 400), curve: Curves.easeOutCubic),
+            onTap: () => _pageController.animateToPage(
+              1,
+              duration: const Duration(milliseconds: 400),
+              curve: Curves.easeOutCubic,
+            ),
             child: Text(
               'FRACLAW',
               style: Theme.of(context).textTheme.headlineLarge?.copyWith(
@@ -279,7 +286,7 @@ class _ChatScreenState extends State<ChatScreen>
             ),
           ),
           actions: [
-             Padding(
+            Padding(
               padding: const EdgeInsets.only(right: 12),
               child: Center(
                 child: IconButton(
@@ -288,7 +295,11 @@ class _ChatScreenState extends State<ChatScreen>
                     color: Colors.white70,
                     size: 22,
                   ),
-                  onPressed: () => _pageController.animateToPage(2, duration: const Duration(milliseconds: 400), curve: Curves.easeOutCubic),
+                  onPressed: () => _pageController.animateToPage(
+                    2,
+                    duration: const Duration(milliseconds: 400),
+                    curve: Curves.easeOutCubic,
+                  ),
                 ),
               ),
             ),
@@ -306,7 +317,11 @@ class _ChatScreenState extends State<ChatScreen>
     );
   }
 
-  Widget _buildChatBody(SocketService socketService, List<ChatMessage> messages, bool isTyping) {
+  Widget _buildChatBody(
+    SocketService socketService,
+    List<ChatMessage> messages,
+    bool isTyping,
+  ) {
     return AuroraBackground(
       child: Stack(
         children: [
@@ -326,7 +341,9 @@ class _ChatScreenState extends State<ChatScreen>
                           itemCount: messages.length + (isTyping ? 1 : 0),
                           itemBuilder: (context, index) {
                             if (isTyping && index == messages.length) {
-                              return _buildInlineThinkingBubble(socketService.activePersona.toLowerCase());
+                              return _buildInlineThinkingBubble(
+                                socketService.activePersona.toLowerCase(),
+                              );
                             }
                             final msg = messages[index];
                             return _MessageBubble(
@@ -532,7 +549,9 @@ class _ChatScreenState extends State<ChatScreen>
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: _isRecording
-                  ? Colors.red.withValues(alpha: 0.1 + (0.2 * _pulseController.value))
+                  ? Colors.red.withValues(
+                      alpha: 0.1 + (0.2 * _pulseController.value),
+                    )
                   : Colors.white.withValues(alpha: 0.05),
               boxShadow: _isRecording
                   ? [
@@ -625,7 +644,9 @@ class _ChatScreenState extends State<ChatScreen>
               shape: BoxShape.circle,
               color: AppTheme.accentPurple.withValues(alpha: 0.15),
               border: Border.all(
-                  color: AppTheme.accentPurple.withValues(alpha: 0.4), width: 1.5),
+                color: AppTheme.accentPurple.withValues(alpha: 0.4),
+                width: 1.5,
+              ),
             ),
             child: ClipOval(
               child: Image.asset(
@@ -633,8 +654,11 @@ class _ChatScreenState extends State<ChatScreen>
                 fit: BoxFit.cover,
                 errorBuilder: (context, error, stackTrace) {
                   return const Center(
-                    child: Icon(Icons.smart_toy_rounded,
-                        color: AppTheme.accentPurple, size: 20),
+                    child: Icon(
+                      Icons.smart_toy_rounded,
+                      color: AppTheme.accentPurple,
+                      size: 20,
+                    ),
                   );
                 },
               ),
@@ -719,88 +743,114 @@ class _ChatScreenState extends State<ChatScreen>
           color: const Color(0xFF030303),
           child: Column(
             children: [
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(24, 40, 24, 20),
-              child: Row(
-                children: [
-                  const Icon(
-                    Icons.history,
-                    color: AppTheme.accentPurple,
-                    size: 20,
+              SafeArea(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 40, 24, 20),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.history,
+                        color: AppTheme.accentPurple,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 12),
+                      const Text(
+                        'HISTORY',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 4,
+                        ),
+                      ),
+                      const Spacer(),
+                      IconButton(
+                        icon: const Icon(Icons.add, color: Colors.white54),
+                        onPressed: () {
+                          service.setSession(null);
+                          _pageController.animateToPage(
+                            1,
+                            duration: const Duration(milliseconds: 400),
+                            curve: Curves.easeOutCubic,
+                          );
+                        },
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 12),
-                  const Text(
-                    'HISTORY',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 4,
-                    ),
-                  ),
-                  const Spacer(),
-                  IconButton(
-                    icon: const Icon(Icons.add, color: Colors.white54),
-                    onPressed: () {
-                      service.setSession(null);
-                      _pageController.animateToPage(1, duration: const Duration(milliseconds: 400), curve: Curves.easeOutCubic);
-                    },
-                  ),
-                ],
-              ),
-            ),
-          ),
-          
-          // Search Bar
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-            child: Container(
-              height: 44,
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.05),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
-              ),
-              child: TextField(
-                controller: _historySearchController,
-                onChanged: (val) => setState(() => _historySearchQuery = val.toLowerCase()),
-                style: const TextStyle(color: Colors.white, fontSize: 13),
-                decoration: InputDecoration(
-                  hintText: 'Search conversations...',
-                  hintStyle: const TextStyle(color: Colors.white24, fontSize: 13),
-                  prefixIcon: const Icon(Icons.search, color: Colors.white54, size: 18),
-                  suffixIcon: _historySearchQuery.isNotEmpty
-                      ? IconButton(
-                          icon: const Icon(Icons.close, color: Colors.white54, size: 16),
-                          onPressed: () {
-                            _historySearchController.clear();
-                            setState(() => _historySearchQuery = '');
-                          },
-                        )
-                      : null,
-                  border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(vertical: 12),
                 ),
               ),
-            ),
-          ),
-          const SizedBox(height: 12),
 
-          Expanded(
-            child: () {
-              final filteredSessions = service.sessions.where((s) => 
-                s.title.toLowerCase().contains(_historySearchQuery)
-              ).toList();
-              
-              return RefreshIndicator(
-                onRefresh: () => service.fetchSessions(),
-                color: AppTheme.accentPurple,
-                backgroundColor: const Color(0xFF1A1A1A),
-                child: service.isLoadingSessions
-                    ? const Center(
-                        child: CircularProgressIndicator(color: AppTheme.accentPurple),
+              // Search Bar
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 8,
+                ),
+                child: Container(
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.05),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.1),
+                    ),
+                  ),
+                  child: TextField(
+                    controller: _historySearchController,
+                    onChanged: (val) =>
+                        setState(() => _historySearchQuery = val.toLowerCase()),
+                    style: const TextStyle(color: Colors.white, fontSize: 13),
+                    decoration: InputDecoration(
+                      hintText: 'Search conversations...',
+                      hintStyle: const TextStyle(
+                        color: Colors.white24,
+                        fontSize: 13,
+                      ),
+                      prefixIcon: const Icon(
+                        Icons.search,
+                        color: Colors.white54,
+                        size: 18,
+                      ),
+                      suffixIcon: _historySearchQuery.isNotEmpty
+                          ? IconButton(
+                              icon: const Icon(
+                                Icons.close,
+                                color: Colors.white54,
+                                size: 16,
+                              ),
+                              onPressed: () {
+                                _historySearchController.clear();
+                                setState(() => _historySearchQuery = '');
+                              },
+                            )
+                          : null,
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              Expanded(
+                child: () {
+                  final filteredSessions = service.sessions
+                      .where(
+                        (s) =>
+                            s.title.toLowerCase().contains(_historySearchQuery),
                       )
-                    : filteredSessions.isEmpty
+                      .toList();
+
+                  return RefreshIndicator(
+                    onRefresh: () => service.fetchSessions(),
+                    color: AppTheme.accentPurple,
+                    backgroundColor: const Color(0xFF1A1A1A),
+                    child: service.isLoadingSessions
+                        ? const Center(
+                            child: CircularProgressIndicator(
+                              color: AppTheme.accentPurple,
+                            ),
+                          )
+                        : filteredSessions.isEmpty
                         ? ListView(
                             physics: const AlwaysScrollableScrollPhysics(),
                             children: [
@@ -809,14 +859,21 @@ class _ChatScreenState extends State<ChatScreen>
                                 child: Column(
                                   children: [
                                     Icon(
-                                      _historySearchQuery.isEmpty ? Icons.history_toggle_off : Icons.search_off, 
-                                      color: Colors.white10, 
-                                      size: 40
+                                      _historySearchQuery.isEmpty
+                                          ? Icons.history_toggle_off
+                                          : Icons.search_off,
+                                      color: Colors.white10,
+                                      size: 40,
                                     ),
                                     const SizedBox(height: 16),
                                     Text(
-                                      _historySearchQuery.isEmpty ? 'No sessions recorded' : 'No matches found',
-                                      style: const TextStyle(color: Colors.white24, fontSize: 13),
+                                      _historySearchQuery.isEmpty
+                                          ? 'No sessions recorded'
+                                          : 'No matches found',
+                                      style: const TextStyle(
+                                        color: Colors.white24,
+                                        fontSize: 13,
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -828,17 +885,22 @@ class _ChatScreenState extends State<ChatScreen>
                             itemCount: filteredSessions.length,
                             itemBuilder: (context, index) {
                               final session = filteredSessions[index];
-                              final isActive = service.currentSessionId == session.id;
+                              final isActive =
+                                  service.currentSessionId == session.id;
                               return Container(
                                 margin: const EdgeInsets.only(bottom: 8),
                                 decoration: BoxDecoration(
                                   color: isActive
-                                      ? AppTheme.accentPurple.withValues(alpha: 0.1)
+                                      ? AppTheme.accentPurple.withValues(
+                                          alpha: 0.1,
+                                        )
                                       : Colors.transparent,
                                   borderRadius: BorderRadius.circular(15),
                                   border: Border.all(
                                     color: isActive
-                                        ? AppTheme.accentPurple.withValues(alpha: 0.3)
+                                        ? AppTheme.accentPurple.withValues(
+                                            alpha: 0.3,
+                                          )
                                         : Colors.transparent,
                                   ),
                                 ),
@@ -846,7 +908,9 @@ class _ChatScreenState extends State<ChatScreen>
                                   title: Text(
                                     session.title,
                                     style: TextStyle(
-                                      color: isActive ? Colors.white : Colors.white70,
+                                      color: isActive
+                                          ? Colors.white
+                                          : Colors.white70,
                                       fontSize: 14,
                                       fontWeight: isActive
                                           ? FontWeight.bold
@@ -864,9 +928,13 @@ class _ChatScreenState extends State<ChatScreen>
                                   ),
                                   onTap: () {
                                     service.setSession(session.id);
-                                    _pageController.animateToPage(1,
-                                        duration: const Duration(milliseconds: 400),
-                                        curve: Curves.easeOutCubic);
+                                    _pageController.animateToPage(
+                                      1,
+                                      duration: const Duration(
+                                        milliseconds: 400,
+                                      ),
+                                      curve: Curves.easeOutCubic,
+                                    );
                                   },
                                   trailing: IconButton(
                                     icon: const Icon(
@@ -886,7 +954,13 @@ class _ChatScreenState extends State<ChatScreen>
                                       if (confirm == true) {
                                         await service.deleteSession(session.id);
                                         if (service.sessions.isEmpty) {
-                                          _pageController.animateToPage(1, duration: const Duration(milliseconds: 400), curve: Curves.easeOutCubic);
+                                          _pageController.animateToPage(
+                                            1,
+                                            duration: const Duration(
+                                              milliseconds: 400,
+                                            ),
+                                            curve: Curves.easeOutCubic,
+                                          );
                                         }
                                       }
                                     },
@@ -895,15 +969,15 @@ class _ChatScreenState extends State<ChatScreen>
                               );
                             },
                           ),
-              );
-            }(),
+                  );
+                }(),
+              ),
+            ],
           ),
-          ],
-        ),
-      );
-    },
-  );
-}
+        );
+      },
+    );
+  }
 
   Widget _buildSystemPanel(BuildContext context, SocketService service) {
     return Consumer<SocketService>(
@@ -1229,7 +1303,9 @@ class _AudioPlayerCardState extends State<_AudioPlayerCard> {
                         activeTrackColor: AppTheme.primaryCyan,
                         inactiveTrackColor: Colors.white10,
                         thumbColor: Colors.white,
-                        overlayColor: AppTheme.primaryCyan.withValues(alpha: 0.2),
+                        overlayColor: AppTheme.primaryCyan.withValues(
+                          alpha: 0.2,
+                        ),
                       ),
                       child: Slider(
                         value: progress.clamp(0.0, 1.0),
@@ -1443,10 +1519,12 @@ class _MessageBubbleState extends State<_MessageBubble>
             selectable: true,
             styleSheet: MarkdownStyleSheet(
               p: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: isUser ? Colors.white : Colors.white.withValues(alpha: 0.88),
-                    fontWeight: isUser ? FontWeight.w500 : FontWeight.w300,
-                    height: 1.5,
-                  ),
+                color: isUser
+                    ? Colors.white
+                    : Colors.white.withValues(alpha: 0.88),
+                fontWeight: isUser ? FontWeight.w500 : FontWeight.w300,
+                height: 1.5,
+              ),
               code: const TextStyle(
                 fontFamily: 'monospace',
                 backgroundColor: Colors.transparent,
@@ -1457,9 +1535,7 @@ class _MessageBubbleState extends State<_MessageBubble>
                 borderRadius: BorderRadius.circular(8),
               ),
             ),
-            builders: {
-              'code': CodeElementBuilder(),
-            },
+            builders: {'code': CodeElementBuilder()},
           ),
           if (hasAudio && _showTranscript)
             Padding(
@@ -1476,7 +1552,9 @@ class _MessageBubbleState extends State<_MessageBubble>
       );
     }
 
-    final activePersona = context.select<SocketService, String>((s) => s.activePersona).toLowerCase();
+    final activePersona = context
+        .select<SocketService, String>((s) => s.activePersona)
+        .toLowerCase();
 
     return FadeTransition(
       opacity: _opacity,
@@ -1490,7 +1568,9 @@ class _MessageBubbleState extends State<_MessageBubble>
             right: isUser ? 0 : 52,
           ),
           child: Row(
-            mainAxisAlignment: isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
+            mainAxisAlignment: isUser
+                ? MainAxisAlignment.end
+                : MainAxisAlignment.start,
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               if (!isUser)
@@ -1501,13 +1581,16 @@ class _MessageBubbleState extends State<_MessageBubble>
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: AppTheme.accentPurple.withValues(alpha: 0.15),
-                    border: Border.all(color: AppTheme.accentPurple.withValues(alpha: 0.4), width: 1.5),
+                    border: Border.all(
+                      color: AppTheme.accentPurple.withValues(alpha: 0.4),
+                      width: 1.5,
+                    ),
                     boxShadow: [
                       BoxShadow(
                         color: AppTheme.accentPurple.withValues(alpha: 0.2),
                         blurRadius: 8,
                         spreadRadius: 1,
-                      )
+                      ),
                     ],
                   ),
                   child: ClipOval(
@@ -1516,7 +1599,11 @@ class _MessageBubbleState extends State<_MessageBubble>
                       fit: BoxFit.cover,
                       errorBuilder: (context, error, stackTrace) {
                         return const Center(
-                          child: Icon(Icons.smart_toy_rounded, color: AppTheme.accentPurple, size: 20),
+                          child: Icon(
+                            Icons.smart_toy_rounded,
+                            color: AppTheme.accentPurple,
+                            size: 20,
+                          ),
                         );
                       },
                     ),
@@ -1735,10 +1822,7 @@ class _ImagePreviewScreen extends StatefulWidget {
   final String imageUrl;
   final String fileName;
 
-  const _ImagePreviewScreen({
-    required this.imageUrl,
-    required this.fileName,
-  });
+  const _ImagePreviewScreen({required this.imageUrl, required this.fileName});
 
   @override
   _ImagePreviewScreenState createState() => _ImagePreviewScreenState();
@@ -1759,10 +1843,12 @@ class _ImagePreviewScreenState extends State<_ImagePreviewScreen> {
         if (Platform.isAndroid) {
           dir = Directory('/storage/emulated/0/Download');
           if (!await dir.exists()) {
-             dir = await getExternalStorageDirectory();
+            dir = await getExternalStorageDirectory();
           }
         } else {
-          dir = await getDownloadsDirectory() ?? await getApplicationDocumentsDirectory();
+          dir =
+              await getDownloadsDirectory() ??
+              await getApplicationDocumentsDirectory();
         }
 
         final savePath = '${dir!.path}/${widget.fileName}';
@@ -1823,13 +1909,16 @@ class _ImagePreviewScreenState extends State<_ImagePreviewScreen> {
               ),
             ),
           ),
-          
+
           // Top Bar Overlay
           SafeArea(
             child: Align(
               alignment: Alignment.topCenter,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16.0,
+                  vertical: 8.0,
+                ),
                 decoration: const BoxDecoration(
                   gradient: LinearGradient(
                     colors: [Colors.black87, Colors.transparent],
@@ -1857,7 +1946,10 @@ class _ImagePreviewScreenState extends State<_ImagePreviewScreen> {
                             ),
                           )
                         : IconButton(
-                            icon: const Icon(Icons.download, color: Colors.white),
+                            icon: const Icon(
+                              Icons.download,
+                              color: Colors.white,
+                            ),
                             onPressed: _downloadImage,
                           ),
                   ],

@@ -9,6 +9,8 @@ python-socketio
 loguru
 python-dotenv
 python-multipart
+soundfile
+pypdf
 python-telegram-bot
 aiohttp
 httpx

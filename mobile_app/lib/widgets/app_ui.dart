@@ -60,7 +60,8 @@ class AppUI {
       content: Row(
         children: [
           Container(
-            width: 8, height: 8,
+            width: 8,
+            height: 8,
             decoration: const BoxDecoration(
               color: Colors.redAccent,
               shape: BoxShape.circle,
@@ -145,7 +146,9 @@ class AppUI {
             color: const Color(0xFF0D0D1A),
             borderRadius: BorderRadius.circular(24),
             border: Border.all(
-              color: (destructive ? Colors.redAccent : confirmColor).withAlpha(50),
+              color: (destructive ? Colors.redAccent : confirmColor).withAlpha(
+                50,
+              ),
               width: 1,
             ),
             boxShadow: [
@@ -163,7 +166,9 @@ class AppUI {
               Row(
                 children: [
                   Icon(
-                    destructive ? Icons.warning_amber_rounded : Icons.help_outline_rounded,
+                    destructive
+                        ? Icons.warning_amber_rounded
+                        : Icons.help_outline_rounded,
                     color: destructive ? Colors.redAccent : confirmColor,
                     size: 20,
                   ),
@@ -194,26 +199,42 @@ class AppUI {
                 children: [
                   TextButton(
                     onPressed: () => Navigator.pop(ctx, false),
-                    style: TextButton.styleFrom(foregroundColor: Colors.white38),
-                    child: Text(cancelLabel, style: const TextStyle(fontSize: 13)),
+                    style: TextButton.styleFrom(
+                      foregroundColor: Colors.white38,
+                    ),
+                    child: Text(
+                      cancelLabel,
+                      style: const TextStyle(fontSize: 13),
+                    ),
                   ),
                   const SizedBox(width: 8),
                   TextButton(
                     onPressed: () => Navigator.pop(ctx, true),
                     style: TextButton.styleFrom(
-                      foregroundColor: destructive ? Colors.redAccent : confirmColor,
-                      backgroundColor: (destructive ? Colors.redAccent : confirmColor).withAlpha(20),
+                      foregroundColor: destructive
+                          ? Colors.redAccent
+                          : confirmColor,
+                      backgroundColor:
+                          (destructive ? Colors.redAccent : confirmColor)
+                              .withAlpha(20),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
                         side: BorderSide(
-                          color: (destructive ? Colors.redAccent : confirmColor).withAlpha(80),
+                          color: (destructive ? Colors.redAccent : confirmColor)
+                              .withAlpha(80),
                         ),
                       ),
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 10,
+                      ),
                     ),
                     child: Text(
                       confirmLabel,
-                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                 ],

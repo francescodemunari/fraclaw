@@ -8,12 +8,10 @@ import 'screens/chat_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await NotificationService.init();
-  
+
   runApp(
     MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => SocketService()),
-      ],
+      providers: [ChangeNotifierProvider(create: (_) => SocketService())],
       child: const FraclawApp(),
     ),
   );

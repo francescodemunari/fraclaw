@@ -1,6 +1,6 @@
 """
-cron_tool.py — Tool nativo per impostare promemoria e avvisi ritardati.
-Sfrutta la JobQueue di python-telegram-bot.
+cron_tool.py — Native tool for setting reminders and delayed alerts.
+Leverages python-telegram-bot's JobQueue.
 """
 
 from loguru import logger
@@ -15,30 +15,30 @@ _broadcast_callback = None
 
 
 def init_job_queue(job_queue: JobQueue, user_id: int) -> None:
-    """Inizializza il modulo con i riferimenti a Telegram."""
+    """Initializes the module with Telegram references."""
     global _job_queue, _user_id
     _job_queue = job_queue
     _user_id = user_id
-    logger.debug("CronTool inizializzato con JobQueue Telegram.")
+    logger.debug("CronTool initialized with Telegram JobQueue.")
 
 
 def init_broadcast_callback(callback) -> None:
-    """Inizializza il callback per broadcast universale (Web/Mobile)."""
+    """Initializes the callback for universal broadcast (Web/Mobile)."""
     global _broadcast_callback
     _broadcast_callback = callback
-    logger.debug("CronTool inizializzato con Broadcast Callback.")
+    logger.debug("CronTool initialized with Broadcast Callback.")
 
 
 async def _dispatch_notification(message: str) -> None:
-    """Invia la notifica su tutti i canali disponibili."""
+    """Sends notification across all available channels."""
     # 1. Telegram
     if _job_queue and _user_id:
         try:
             await _job_queue.run_once(
                 _send_telegram_callback, 1, data=message
-            )  # Esegui quasi subito
+            )  # Execute almost immediately
         except Exception as e:
-            logger.error(f"Errore dispatch Telegram: {e}")
+            logger.error(f"Telegram dispatch error: {e}")
 
     # 2. Broadcast (Socket.IO / Mobile)
     if _broadcast_callback:
@@ -46,23 +46,23 @@ async def _dispatch_notification(message: str) -> None:
             if callable(_broadcast_callback):
                 await _broadcast_callback(message)
         except Exception as e:
-            logger.error(f"Errore dispatch Broadcast: {e}")
+            logger.error(f"Broadcast dispatch error: {e}")
 
 
 async def _send_telegram_callback(context) -> None:
-    """Callback per JobQueue Telegram."""
+    """Callback for Telegram JobQueue."""
     job = context.job
     try:
         await context.bot.send_message(
-            chat_id=_user_id, text=f"⏰ *PROMEMORIA*\n\n{job.data}", parse_mode="Markdown"
+            chat_id=_user_id, text=f"⏰ *REMINDER*\n\n{job.data}", parse_mode="Markdown"
         )
-        logger.info(f"Telegram reminder inviato: {job.data[:50]}...")
+        logger.info(f"Telegram reminder sent: {job.data[:50]}...")
     except Exception as e:
-        logger.error(f"Errore invio Telegram reminder: {e}")
+        logger.error(f"Error sending Telegram reminder: {e}")
 
 
 async def _async_delay_task(delay_seconds: float, message: str) -> None:
-    """Fallback asincrono per sistemi senza JobQueue Telegram."""
+    """Asynchronous fallback for systems without Telegram JobQueue."""
     import asyncio
     await asyncio.sleep(delay_seconds)
     await _dispatch_notification(message)
@@ -71,8 +71,8 @@ async def _async_delay_task(delay_seconds: float, message: str) -> None:
 
 def set_reminder(message: str, delay_minutes: float) -> dict:
     """
-    Imposta un promemoria che verrà inviato all'utente tra X minuti.
-    Supporta sia Telegram che il broadcast Socket.IO.
+    Sets a reminder to be sent to the user in X minutes.
+    Supports both Telegram and Socket.IO broadcast.
     """
     import asyncio
 
@@ -80,21 +80,21 @@ def set_reminder(message: str, delay_minutes: float) -> dict:
         delay_seconds = float(delay_minutes) * 60.0
 
         if _job_queue:
-            # Sfruttiamo la JobQueue di Telegram se presente per persistenza
+            # Leverage Telegram JobQueue if present for persistence
             _job_queue.run_once(_send_telegram_callback, delay_seconds, data=message)
         else:
-            # Fallback nativo asincrono (valido finché il processo api è vivo)
+            # Native async fallback (valid as long as the api process is alive)
             asyncio.create_task(_async_delay_task(delay_seconds, message))
 
         logger.info(
-            f"⏰ Promemoria impostato tra {delay_minutes} minuti: {message[:30]}..."
+            f"⏰ Reminder set for {delay_minutes} minutes: {message[:30]}..."
         )
 
         return {
             "success": True,
-            "message": f"Promemoria salvato. Ti avviserò tra {delay_minutes} min.",
+            "message": f"Reminder saved. I will notify you in {delay_minutes} min.",
         }
     except Exception as e:
-        logger.error(f"Errore impostazione promemoria: {e}")
+        logger.error(f"Error setting reminder: {e}")
         return {"error": str(e)}
 

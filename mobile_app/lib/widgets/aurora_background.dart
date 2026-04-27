@@ -7,10 +7,7 @@ class AuroraBackground extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return CustomPaint(
-      painter: _AuroraPainter(),
-      child: child,
-    );
+    return CustomPaint(painter: _AuroraPainter(), child: child);
   }
 }
 

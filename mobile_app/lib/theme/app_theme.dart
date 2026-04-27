@@ -7,7 +7,7 @@ class AppTheme {
   static const Color surfaceDark = Color(0xFF0A0C10);
   static const Color primaryCyan = Color(0xFF8190B2); // Silver Crystal Glow
   static const Color accentPurple = Color(0xFF4A2C5A); // Amethyst Depth
-  static const Color neonCyan = Color(0xFF00FFFF);    // Neural High-Frequency
+  static const Color neonCyan = Color(0xFF00FFFF); // Neural High-Frequency
   static const Color textLight = Color(0xFFE1E2E8);
   static const Color textGrey = Color(0xFF8E9099);
 
@@ -21,34 +21,33 @@ class AppTheme {
       surface: surfaceDark,
       onSurface: textLight,
     ),
-    textTheme: GoogleFonts.interTextTheme().apply(
-      bodyColor: textLight,
-      displayColor: textLight,
-    ).copyWith(
-      headlineLarge: GoogleFonts.outfit(
-        fontSize: 32,
-        fontWeight: FontWeight.w900,
-        letterSpacing: 8,
-        color: textLight,
-      ),
-      titleLarge: GoogleFonts.outfit(
-        fontSize: 20,
-        fontWeight: FontWeight.w800,
-        letterSpacing: 2,
-        color: textLight,
-      ),
-      bodyLarge: GoogleFonts.inter(
-        fontSize: 16,
-        color: textLight,
-        fontWeight: FontWeight.w400,
-        height: 1.5,
-      ),
-      bodyMedium: GoogleFonts.inter(
-        fontSize: 14,
-        color: textLight,
-        fontWeight: FontWeight.w300,
-      ),
-    ),
+    textTheme: GoogleFonts.interTextTheme()
+        .apply(bodyColor: textLight, displayColor: textLight)
+        .copyWith(
+          headlineLarge: GoogleFonts.outfit(
+            fontSize: 32,
+            fontWeight: FontWeight.w900,
+            letterSpacing: 8,
+            color: textLight,
+          ),
+          titleLarge: GoogleFonts.outfit(
+            fontSize: 20,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 2,
+            color: textLight,
+          ),
+          bodyLarge: GoogleFonts.inter(
+            fontSize: 16,
+            color: textLight,
+            fontWeight: FontWeight.w400,
+            height: 1.5,
+          ),
+          bodyMedium: GoogleFonts.inter(
+            fontSize: 14,
+            color: textLight,
+            fontWeight: FontWeight.w300,
+          ),
+        ),
     appBarTheme: const AppBarTheme(
       backgroundColor: primaryDark,
       elevation: 0,

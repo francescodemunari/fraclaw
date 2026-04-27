@@ -3,11 +3,7 @@ class ChatSession {
   final String title;
   final DateTime createdAt;
 
-  ChatSession({
-    required this.id,
-    required this.title,
-    required this.createdAt,
-  });
+  ChatSession({required this.id, required this.title, required this.createdAt});
 
   factory ChatSession.fromJson(Map<String, dynamic> json) {
     return ChatSession(

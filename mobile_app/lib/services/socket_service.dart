@@ -49,10 +49,10 @@ class SocketService with ChangeNotifier {
 
     // Reset fetch state
     _hasSuccessfullyFetched = false;
-    
+
     // Start persistent fetching loop
     _startPersistentFetch();
-    
+
     fetchPersonas();
     connect();
   }
@@ -60,7 +60,7 @@ class SocketService with ChangeNotifier {
   Timer? _fetchTimer;
   void _startPersistentFetch() {
     _fetchTimer?.cancel();
-    
+
     // Initial fetch
     fetchSessions();
 
@@ -96,7 +96,7 @@ class SocketService with ChangeNotifier {
     _serverUrl = sanitized;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('server_url', sanitized);
-    
+
     // Reset and start fetching again for the new URL
     _startPersistentFetch();
     connect();
@@ -123,7 +123,7 @@ class SocketService with ChangeNotifier {
       // Force a fresh persistent fetch cycle on connection
       _hasSuccessfullyFetched = false;
       _startPersistentFetch();
-      
+
       await fetchPersonas();
 
       // No automatic session restoration
@@ -167,7 +167,7 @@ class SocketService with ChangeNotifier {
     _socket!.on('personas_list', (data) {
       if (data['personas'] != null) {
         _personas = List<Map<String, dynamic>>.from(data['personas']);
-        
+
         final active = _personas.firstWhere(
           (p) => p['is_active'] == 1,
           orElse: () => {},

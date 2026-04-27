@@ -10,6 +10,7 @@ from typing import List, Optional
 # Fix path to allow direct execution
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
@@ -24,8 +25,38 @@ from src.memory.preferences import list_personas, switch_persona, save_conversat
 from src.memory.vector import clear_all_memories
 from src.config import config
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup logic
+    try:
+        from src.tools.whisper_tool import pre_load_model
+        await pre_load_model()
+        logger.info("✅ Transcription Model ready and in memory.")
+    except Exception as e:
+        logger.error(f"❌ Failed to pre-load Whisper: {e}")
+
+    # Wire CronTool for global broadcasts (Web/Mobile)
+    try:
+        from src.tools.cron_tool import init_broadcast_callback
+        
+        async def broadcast_notification(message: str):
+            await sio.emit('notification', {'message': message})
+            logger.info(f"🔔 Notification broadcasted to all clients: {message[:50]}...")
+
+        init_broadcast_callback(broadcast_notification)
+    except Exception as e:
+        logger.error(f"❌ Failed to wire CronTool: {e}")
+
+    # Ensure DB is initialized
+    init_db()
+    logger.info("✅ Backend initialization complete.")
+    
+    yield
+    # Shutdown logic
+    logger.info("🔚 Backend shutting down...")
+
 # FastAPI Standalone App
-app = FastAPI(title="Fraclaw Web API", version="1.0")
+app = FastAPI(title="Fraclaw Web API", version="1.0", lifespan=lifespan)
 
 # Enable CORS for frontend and mobile access
 app.add_middleware(
@@ -61,31 +92,6 @@ app.mount("/workspace", StaticFiles(directory=str(WORKSPACE_DIR)), name="workspa
 app.mount("/outputs", StaticFiles(directory=str(OUTPUT_DIR)), name="outputs")
 app.mount("/generated_images", StaticFiles(directory=str(GENERATED_IMAGES_DIR)), name="generated_images")
 
-@app.on_event("startup")
-async def startup_event():
-    """Executed when the server starts."""
-    try:
-        from src.tools.whisper_tool import pre_load_model
-        await pre_load_model()
-        logger.info("✅ Transcription Model ready and in memory.")
-    except Exception as e:
-        logger.error(f"❌ Failed to pre-load Whisper: {e}")
-
-    # Wire CronTool for global broadcasts (Web/Mobile)
-    try:
-        from src.tools.cron_tool import init_broadcast_callback
-        
-        async def broadcast_notification(message: str):
-            await sio.emit('notification', {'message': message})
-            logger.info(f"🔔 Notification broadcasted to all clients: {message[:50]}...")
-
-        init_broadcast_callback(broadcast_notification)
-    except Exception as e:
-        logger.error(f"❌ Failed to wire CronTool: {e}")
-
-    # Ensure DB is initialized
-    init_db()
-    logger.info("✅ Backend initialization complete.")
 
 # --- API Endpoints ---
 
