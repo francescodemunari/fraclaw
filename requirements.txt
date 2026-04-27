@@ -9,6 +9,7 @@ python-socketio
 loguru
 python-dotenv
 python-multipart
+python-telegram-bot
 aiohttp
 httpx
 
@@ -30,7 +31,7 @@ reportlab
 openpyxl
 python-pptx
 
-# Voice, Audio & Listen (Lite Mode)
+# Voice, Audio & Listen
 edge-tts
 send2trash
-# faster-whisper (Optional, moved to potential future extension)
+faster-whisper
