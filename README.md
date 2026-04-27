@@ -59,10 +59,12 @@ Fraclaw has been successfully tested on a mid-range local environment:
 ## Setup and Deployment Guide
 
 ### 1. Project Initialization
-First, clone the repository and install all required Python dependencies for the core backend.
+First, clone the repository and set up a Python virtual environment. This is required because the automated launch scripts (.bat) look for a `.venv` folder in the project root.
 ```bash
 git clone https://github.com/francescodemunari/fraclaw
 cd fraclaw
+python -m venv .venv
+.venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
