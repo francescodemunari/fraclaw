@@ -10,6 +10,7 @@ from datetime import datetime
 from loguru import logger
 from src.memory.preferences import get_active_persona
 from src.config import config
+import soundfile as sf
 
 # Directories — resolved relative to project root regardless of working directory
 _PROJECT_ROOT = Path(__file__).parent.parent.parent
