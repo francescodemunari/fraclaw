@@ -213,9 +213,3 @@ fraclaw/
 ├── webapp/                    # React frontend
 └── mobile_app/                # Flutter app
 ```
-
----
-
-## License
-
-MIT
