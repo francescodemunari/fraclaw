@@ -1,6 +1,6 @@
 ![Fraclaw Banner](webapp/public/banner.png)
 
-<h1 align="center">FRACLAW v1.2 — Multi-Provider Local AI Agent</h1>
+<h1 align="center">FRACLAW — AI Agent</h1>
 
 <p align="center">
   <strong>A multi-tool assistant that runs on your hardware or connects to any cloud LLM.</strong>
