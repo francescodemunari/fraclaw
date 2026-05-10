@@ -1,5 +1,5 @@
 """
-database.py — SQLite Setup and Connection
+database.py — SQLite Setup, Connection, and FTS5 Search
 """
 
 import sqlite3
@@ -13,9 +13,7 @@ def get_connection() -> sqlite3.Connection:
     db_path = Path(config.db_path)
     db_path.parent.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(db_path)
-    # Enable foreign key constraints
     conn.execute("PRAGMA foreign_keys = ON")
-    # Row factory: results behave like dictionaries
     conn.row_factory = sqlite3.Row
     return conn
 
@@ -26,7 +24,6 @@ def init_db() -> None:
     try:
         cursor = conn.cursor()
 
-        # User facts table
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS user_facts (
                 id         INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -38,16 +35,15 @@ def init_db() -> None:
             )
         """)
 
-        # Sessions table
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS sessions (
                 id         INTEGER PRIMARY KEY AUTOINCREMENT,
                 title      TEXT    NOT NULL,
+                tags       TEXT    DEFAULT '',
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP
             )
         """)
 
-        # Conversation history table
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS conversations (
                 id         INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -59,7 +55,6 @@ def init_db() -> None:
             )
         """)
 
-        # Message attachments table (NEW)
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS attachments (
                 id            INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -71,52 +66,87 @@ def init_db() -> None:
             )
         """)
 
-        # Personas table
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS personas (
                 id            INTEGER PRIMARY KEY AUTOINCREMENT,
                 name          TEXT    NOT NULL UNIQUE,
                 description   TEXT,
                 system_prompt TEXT    NOT NULL,
-                voice_id      TEXT    NOT NULL,
-                premium_voice BOOLEAN DEFAULT 0,
-                is_active     BOOLEAN DEFAULT 0
+                voice_id      TEXT    DEFAULT 'en-US-AndrewNeural',
+                premium_voice INTEGER DEFAULT 0,
+                is_active     INTEGER DEFAULT 0
             )
         """)
 
-        # Web Monitoring table (Watchman)
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS web_monitors (
-                id            INTEGER PRIMARY KEY AUTOINCREMENT,
-                title         TEXT    NOT NULL UNIQUE,
-                query         TEXT    NOT NULL,
-                url           TEXT,
-                interval_hours INTEGER NOT NULL DEFAULT 6,
-                last_hash     TEXT,
-                is_active     BOOLEAN DEFAULT 1,
-                last_check    DATETIME,
-                created_at    DATETIME DEFAULT CURRENT_TIMESTAMP
+                id              INTEGER PRIMARY KEY AUTOINCREMENT,
+                title           TEXT    NOT NULL,
+                query           TEXT    NOT NULL,
+                interval_hours  INTEGER DEFAULT 6,
+                last_check      DATETIME,
+                created_at      DATETIME DEFAULT CURRENT_TIMESTAMP
             )
         """)
 
-        # Migration: Add session_id if missing
-        try:
-            cursor.execute("ALTER TABLE conversations ADD COLUMN session_id INTEGER")
-            logger.info("➕ Added 'session_id' column to conversations table.")
-        except sqlite3.OperationalError:
-            pass
+        # ─── FTS5 Full-Text Search ───────────────────────────────
+        cursor.execute("""
+            CREATE VIRTUAL TABLE IF NOT EXISTS conversations_fts
+            USING fts5(content, role, session_id UNINDEXED)
+        """)
 
-        # Migration: Add premium_voice if missing
-        try:
-            cursor.execute("ALTER TABLE personas ADD COLUMN premium_voice BOOLEAN DEFAULT 0")
-            logger.info("➕ Added 'premium_voice' column to personas table.")
-        except sqlite3.OperationalError:
-            pass
+        # Trigger to keep FTS in sync with conversations table
+        cursor.execute("""
+            CREATE TRIGGER IF NOT EXISTS conversations_fts_insert
+            AFTER INSERT ON conversations
+            BEGIN
+                INSERT INTO conversations_fts(rowid, content, role, session_id)
+                VALUES (new.id, new.content, new.role, new.session_id);
+            END
+        """)
 
-        # REMOVED: Automatic insertion of default session ('Conversazione Iniziale').
-        # The user wants an empty sidebar after purge/init.
+        cursor.execute("""
+            CREATE TRIGGER IF NOT EXISTS conversations_fts_delete
+            AFTER DELETE ON conversations
+            BEGIN
+                INSERT INTO conversations_fts(conversations_fts, rowid, content, role, session_id)
+                VALUES ('delete', old.id, old.content, old.role, old.session_id);
+            END
+        """)
 
         conn.commit()
-        logger.info(f"✅ SQLite Database initialized: {config.db_path}")
+        logger.info("Database initialized (FTS5 enabled)")
+    except Exception as e:
+        logger.error(f"Database init error: {e}")
+    finally:
+        conn.close()
+
+
+def search_conversations(query: str, limit: int = 5) -> list[dict]:
+    """Search all conversations using FTS5 full-text search."""
+    conn = get_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT c.role, c.content, c.session_id, c.timestamp
+            FROM conversations_fts fts
+            JOIN conversations c ON c.id = fts.rowid
+            WHERE conversations_fts MATCH ?
+            ORDER BY rank
+            LIMIT ?
+        """, (query, limit))
+
+        results = []
+        for row in cursor.fetchall():
+            results.append({
+                "role": row["role"],
+                "content": row["content"],
+                "session_id": row["session_id"],
+                "timestamp": row["timestamp"],
+            })
+        return results
+    except Exception as e:
+        logger.error(f"FTS5 search error: {e}")
+        return []
     finally:
         conn.close()

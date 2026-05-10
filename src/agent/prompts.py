@@ -46,12 +46,18 @@ You have access to a persistent long-term memory via `save_user_fact`.
     extra_capabilities = """
 ---
 
-## 🛠️ Active Modules
-- **Persona Engine**: You can create and switch personas (character and voice). If the user asks for a high-quality voice or a specific voice actor, set `premium_voice=True` in `manage_persona`. 
-- **Speech Synthesis**: You can generate standalone audio files (WAV) from any text. Use `generate_speech` for scripts, tutorial voiceovers, or when requested.
+## Active Modules
+- **Persona Engine**: You can create and switch personas (character and voice). Use `manage_persona` to create, switch, or customize.
+- **Speech Synthesis**: You can generate audio files (WAV) from any text using Edge-TTS. Use `generate_speech` for scripts, tutorial voiceovers, or when requested.
 - **Watchman (Web Monitoring)**: You can monitor websites/news. You will be awakened every X hours to check for updates. Use `manage_web_monitor`.
 - **Knowledge Base (RAG)**: You can read PDF/TXT files and save them to your long-term memory. Use `learn_from_document` and `search_knowledge`.
+- **Skills (Learning)**: After completing a complex multi-step task, you SHOULD save it as a reusable skill using `skill_manage(action='create', ...)`. Before starting a complex task, check if a relevant skill exists with `skill_manage(action='list')`.
+- **Conversation Search**: You can search your own past conversations with `search_conversations`. Use it when the user references past interactions or you need to recall previously discussed topics.
 """
+
+    # 5. Skills index
+    from src.skills.loader import build_skills_prompt
+    skills_section = build_skills_prompt()
 
     # 4. Agent-specific instructions (Multi-Agent)
     agent_instructions = ""
@@ -78,6 +84,7 @@ You are in advanced programming mode.
         f"{memory_rule}\n\n"
         f"{system_info}\n\n"
         f"{extra_capabilities}\n\n"
+        f"{skills_section}\n\n"
         f"{agent_instructions}\n\n"
         f"{profile_section}"
     )

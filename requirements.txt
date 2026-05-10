@@ -1,6 +1,4 @@
-# Fraclaw Core Requirements
-# Optimized for high-speed, low-footprint deployment.
-# For premium voice cloning, also run: pip install -r requirements-premium.txt
+# Fraclaw v1.2 Core Requirements
 
 # Core Framework
 fastapi
@@ -8,14 +6,22 @@ uvicorn
 python-socketio
 loguru
 python-dotenv
+python-multipart
 aiohttp
 httpx
 
-# Memory & AI Logic
+# Messaging Platforms
+python-telegram-bot
+discord.py
+
+# AI & LLM (Multi-Provider)
 openai
-sqlite3-api
-pydantic
+anthropic
 tiktoken
+pydantic
+
+# Memory & Knowledge
+chromadb
 
 # Tools - Search & Scraping
 duckduckgo-search
@@ -29,7 +35,7 @@ reportlab
 openpyxl
 python-pptx
 
-# Voice, Audio & Listen (Lite Mode)
+# Voice, Audio & Safety
 edge-tts
 send2trash
-# faster-whisper (Optional, moved to potential future extension)
+faster-whisper

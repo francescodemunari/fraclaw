@@ -385,8 +385,7 @@ TOOLS_SCHEMA = [
                     "name": {"type": "string", "description": "Name of the persona."},
                     "description": {"type": "string", "description": "Short bio (for 'save' action)."},
                     "system_prompt": {"type": "string", "description": "Full system instruction (for 'save' action)."},
-                    "voice_id": {"type": "string", "description": "Edge-TTS voice (e.g., 'en-US-AndrewNeural'). Only for LITE mode."},
-                    "premium": {"type": "boolean", "description": "Use premium local voice (Chatterbox Local Cloning). Default: False."},
+                    "voice_id": {"type": "string", "description": "Edge-TTS voice ID (e.g., 'en-US-AndrewNeural')."},
                 },
                 "required": ["action"],
             },
@@ -395,25 +394,8 @@ TOOLS_SCHEMA = [
     {
         "type": "function",
         "function": {
-            "name": "manage_voice_engine",
-            "description": "Switches the voice synthesis engine between PREMIUM (Local Cloning/Chatterbox) and LITE (Fast/Edge-TTS).",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "premium": {
-                        "type": "boolean",
-                        "description": "If true, enables the heavy Premium local engine. If false, switches to the fast Lite engine."
-                    }
-                },
-                "required": ["premium"]
-            }
-        }
-    },
-    {
-        "type": "function",
-        "function": {
             "name": "generate_speech",
-            "description": "Synthesizes text into a high-quality audio file (WAV). Use this when the user specifically asks for an audio version of a script, a tutorial voiceover, or a standalone audio file.",
+            "description": "Synthesizes text into an audio file (WAV) using Edge-TTS. Use this when the user asks for an audio version of a script, a tutorial voiceover, or a standalone audio file.",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -423,10 +405,69 @@ TOOLS_SCHEMA = [
                     },
                     "voice": {
                         "type": "string",
-                        "description": "Optional Edge-TTS voice ID. Only for LITE mode.",
+                        "description": "Optional Edge-TTS voice ID (e.g., 'en-US-AndrewNeural').",
                     }
                 },
                 "required": ["text"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "skill_manage",
+            "description": "Manage reusable skills (procedures you've learned). Use 'create' after completing a complex multi-step task to save it for future reuse. Use 'list' to see available skills, 'view' to read one.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "action": {
+                        "type": "string",
+                        "enum": ["create", "edit", "patch", "delete", "list", "view"],
+                        "description": "The action to perform.",
+                    },
+                    "name": {
+                        "type": "string",
+                        "description": "Skill name (lowercase, hyphens/underscores, 3-64 chars).",
+                    },
+                    "content": {
+                        "type": "string",
+                        "description": "Full SKILL.md content with YAML frontmatter (for create/edit).",
+                    },
+                    "category": {
+                        "type": "string",
+                        "description": "Category folder (e.g., 'coding', 'documents', 'automation'). Default: 'general'.",
+                    },
+                    "old_string": {
+                        "type": "string",
+                        "description": "Text to find (for patch action).",
+                    },
+                    "new_string": {
+                        "type": "string",
+                        "description": "Replacement text (for patch action).",
+                    },
+                },
+                "required": ["action"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "search_conversations",
+            "description": "Search through past conversation history using full-text search. Use when user asks 'have we talked about...', 'what did we do with...', or needs to recall past interactions.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "query": {
+                        "type": "string",
+                        "description": "The search query (keywords or phrases).",
+                    },
+                    "limit": {
+                        "type": "integer",
+                        "description": "Maximum results to return (default: 5).",
+                    },
+                },
+                "required": ["query"],
             },
         },
     },
@@ -477,7 +518,7 @@ def get_tool_map() -> dict[str, Callable]:
     from src.tools.tts_tool import generate_speech
     from src.tools.monitor_tool import manage_web_monitor
     from src.tools.rag_tool import learn_from_document, search_knowledge
-    from src.tools.persona_tool import manage_persona, manage_voice_engine
+    from src.tools.persona_tool import manage_persona
 
     # Synchronous wrappers for memory functions
     def _save_user_fact(category: str, key: str, value: str) -> dict:
@@ -499,6 +540,13 @@ def get_tool_map() -> dict[str, Callable]:
         success = delete_fact(category, key)
         return {"success": success, "message": "Fact deleted." if success else "Not found or error."}
 
+    from src.skills.manager import skill_manage
+    from src.memory.database import search_conversations
+
+    def _search_conversations(query: str, limit: int = 5) -> dict:
+        results = search_conversations(query, limit)
+        return {"results": results, "count": len(results), "query": query}
+
     return {
         "read_file": read_file,
         "write_file": write_file,
@@ -512,15 +560,16 @@ def get_tool_map() -> dict[str, Callable]:
         "generate_docx": generate_docx,
         "generate_xlsx": generate_xlsx,
         "generate_pptx": generate_pptx,
-        "generate_image": generate_image,   # async
+        "generate_image": generate_image,
         "save_user_fact": _save_user_fact,
         "delete_user_fact": _delete_user_fact,
         "get_user_profile": _get_user_profile,
         "set_reminder": set_reminder,
         "manage_persona": manage_persona,
-        "manage_voice_engine": manage_voice_engine,
         "manage_web_monitor": manage_web_monitor,
         "learn_from_document": learn_from_document,
         "search_knowledge": search_knowledge,
         "generate_speech": generate_speech,
+        "skill_manage": skill_manage,
+        "search_conversations": _search_conversations,
     }

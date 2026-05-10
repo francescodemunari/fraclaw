@@ -188,7 +188,7 @@ async def run_agent(
 
     # ── Build message list ──────────────────────────────────
     system_prompt = build_system_prompt(agent_state=agent_state)
-    history = get_recent_history(limit=10, session_id=session_id)
+    history = get_recent_history(limit=config.history_limit, session_id=session_id)
 
     messages = [{"role": "system", "content": system_prompt}]
     messages.extend(history)

@@ -1,8 +1,5 @@
 """
-config.py — Loads and validates all configuration from the .env file
-
-Uses python-dotenv + dataclass to keep configuration centralized
-and accessible from any module via `from src.config import config`.
+config.py — Loads and validates all configuration from the .env file.
 """
 
 import os
@@ -14,7 +11,6 @@ from loguru import logger
 import sys
 
 # ─── Global Logging Setup ─────────────────────────────────────────────────────
-# Initialize before anything else to ensure all imports capture this structure
 log_dir = Path(__file__).parent.parent / "data" / "logs"
 log_dir.mkdir(parents=True, exist_ok=True)
 logger.remove()
@@ -44,6 +40,11 @@ load_dotenv(dotenv_path=Path(__file__).parent.parent / ".env")
 
 @dataclass
 class Config:
+    # ── Active Provider ──────────────────────────────────────
+    active_provider: str = field(
+        default_factory=lambda: os.getenv("ACTIVE_PROVIDER", "lm_studio")
+    )
+
     # ── Telegram ─────────────────────────────────────────────
     telegram_token: str = field(
         default_factory=lambda: os.getenv("TELEGRAM_TOKEN", "")
@@ -52,7 +53,22 @@ class Config:
         default_factory=lambda: int(os.getenv("TELEGRAM_ALLOWED_USER_ID", "0"))
     )
 
-    # ── LM Studio ────────────────────────────────────────────
+    # ── Discord ──────────────────────────────────────────────
+    discord_token: str = field(
+        default_factory=lambda: os.getenv("DISCORD_TOKEN", "")
+    )
+    discord_allowed_user_ids: list = field(
+        default_factory=lambda: [
+            uid.strip() for uid in os.getenv("DISCORD_ALLOWED_USER_IDS", "").split(",") if uid.strip()
+        ]
+    )
+
+    # ── WhatsApp ─────────────────────────────────────────────
+    whatsapp_enabled: bool = field(
+        default_factory=lambda: os.getenv("WHATSAPP_ENABLED", "false").lower() == "true"
+    )
+
+    # ── LM Studio (Local) ────────────────────────────────────
     lm_studio_base_url: str = field(
         default_factory=lambda: os.getenv("LM_STUDIO_BASE_URL", "http://localhost:1234/v1")
     )
@@ -60,7 +76,6 @@ class Config:
         default_factory=lambda: os.getenv("LM_STUDIO_API_URL", "http://localhost:1234")
     )
     lm_studio_model: str = field(
-        # Multi-Agent Models
         default_factory=lambda: os.getenv("LLM_MODEL_BASE", "qwen/qwen3.5-9b")
     )
     llm_model_coder: str = field(
@@ -68,6 +83,23 @@ class Config:
     )
     llm_model_audio: str = field(
         default_factory=lambda: os.getenv("LLM_MODEL_AUDIO", "qwen2-audio")
+    )
+
+    # ── Cloud Provider API Keys ──────────────────────────────
+    openrouter_api_key: str = field(
+        default_factory=lambda: os.getenv("OPENROUTER_API_KEY", "")
+    )
+    anthropic_api_key: str = field(
+        default_factory=lambda: os.getenv("ANTHROPIC_API_KEY", "")
+    )
+    openai_api_key: str = field(
+        default_factory=lambda: os.getenv("OPENAI_API_KEY", "")
+    )
+    deepseek_api_key: str = field(
+        default_factory=lambda: os.getenv("DEEPSEEK_API_KEY", "")
+    )
+    gemini_api_key: str = field(
+        default_factory=lambda: os.getenv("GEMINI_API_KEY", "")
     )
 
     # ── ComfyUI ──────────────────────────────────────────────
@@ -95,6 +127,11 @@ class Config:
         default_factory=lambda: os.getenv("WHISPER_MODEL", "base")
     )
 
+    # ── Agent Behaviour ──────────────────────────────────────
+    history_limit: int = field(
+        default_factory=lambda: int(os.getenv("HISTORY_LIMIT", "25"))
+    )
+
     # ── Project Root ─────────────────────────────────────────
     project_root: Path = field(
         default_factory=lambda: Path(__file__).parent.parent
@@ -111,21 +148,22 @@ class Config:
     def validate(self) -> "Config":
         """Validates critical fields and raises an error if missing."""
         errors = []
-        if not self.telegram_token:
-            errors.append("TELEGRAM_TOKEN not set in .env")
-        if not self.telegram_allowed_user_id:
-            errors.append("TELEGRAM_ALLOWED_USER_ID not set in .env")
+        if not self.telegram_token and not self.discord_token:
+            errors.append("At least one platform token must be set (TELEGRAM_TOKEN or DISCORD_TOKEN)")
+        if self.telegram_token and not self.telegram_allowed_user_id:
+            errors.append("TELEGRAM_ALLOWED_USER_ID not set (required when using Telegram)")
         if errors:
             for e in errors:
-                logger.error(f"❌ Config error: {e}")
+                logger.error(f"Config error: {e}")
             raise ValueError(f"Invalid configuration: {', '.join(errors)}")
         logger.info(
-            f"✅ Config loaded — Model: {self.lm_studio_model} "
+            f"Config loaded — Provider: {self.active_provider} "
+            f"| Model: {self.lm_studio_model} "
             f"| VRAM: {self.vram_mode} "
-            f"| Whisper: {self.whisper_model}"
+            f"| History: {self.history_limit}"
         )
         return self
 
 
-# Global instance — always import from here
+# Global instance
 config = Config().validate()
